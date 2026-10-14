@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="utf-8"?>
+<shortcuts xmlns:android="http://schemas.android.com/apk/res/android">
+    <shortcut
+        android:shortcutId="compress"
+        android:enabled="true"
+        android:icon="@android:drawable/ic_menu_crop"
+        android:shortcutShortLabel="@string/shortcut_compress">
+        <intent
+            android:action="android.intent.action.MAIN"
+            android:targetPackage="com.spaceslimmer.app"
+            android:targetClass="com.spaceslimmer.app.MainActivity">
+            <extra
+                android:name="com.spaceslimmer.app.extra.OPEN"
+                android:value="compress" />
+        </intent>
+    </shortcut>
+    <shortcut
+        android:shortcutId="radar"
+        android:enabled="true"
+        android:icon="@android:drawable/ic_menu_search"
+        android:shortcutShortLabel="@string/shortcut_radar">
+        <intent
+            android:action="android.intent.action.VIEW"
+            android:targetPackage="com.spaceslimmer.app"
+            android:targetClass="com.spaceslimmer.app.MainActivity">
+            <extra
+                android:name="com.spaceslimmer.app.extra.OPEN"
+                android:value="radar" />
+        </intent>
+    </shortcut>
+    <shortcut
+        android:shortcutId="history"
+        android:enabled="true"
+        android:icon="@android:drawable/ic_menu_recent_history"
+        android:shortcutShortLabel="@string/shortcut_history">
+        <intent
+            android:action="android.intent.action.VIEW"
+            android:targetPackage="com.spaceslimmer.app"
+            android:targetClass="com.spaceslimmer.app.MainActivity">
+            <extra
+                android:name="com.spaceslimmer.app.extra.OPEN"
+                android:value="history" />
+        </intent>
+    </shortcut>
+    <shortcut
+        android:shortcutId="recent_week"
+        android:enabled="true"
+        android:icon="@android:drawable/ic_menu_today"
+        android:shortcutShortLabel="@string/shortcut_recent_week">
+        <intent
+            android:action="android.intent.action.VIEW"
+            android:targetPackage="com.spaceslimmer.app"
+            android:targetClass="com.spaceslimmer.app.MainActivity">
+            <extra
+                android:name="com.spaceslimmer.app.extra.OPEN"
+                android:value="recent_week" />
+        </intent>
+    </shortcut>
+</shortcuts>

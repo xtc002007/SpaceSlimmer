@@ -1,0 +1,190 @@
+# ====================================================================
+# Rust
+# ====================================================================
+target/
+**/target/
+**/*.rs.bk
+# Cargo.lock is tracked for reproducible builds in this monorepo
+
+# ====================================================================
+# Android
+# ====================================================================
+.gradle/
+**/.gradle/
+build/
+**/build/
+.cxx/
+**/.cxx/
+.externalNativeBuild/
+**/.externalNativeBuild/
+captures/
+**/captures/
+.kotlin/
+**/.kotlin/
+local.properties
+**/local.properties
+keystore.properties
+**/keystore.properties
+
+# UniFFI generated bindings in Android source tree
+**/src/main/jniLibs/
+**/src/main/java/uniffi/
+
+# Android build outputs & binaries
+*.apk
+*.ap_
+*.aab
+*.dex
+*.class
+
+# Release directory build outputs
+release/*.apk
+release/*.aab
+release/*.ipa
+
+# ====================================================================
+# iOS / Apple
+# ====================================================================
+# Xcode
+DerivedData/
+**/DerivedData/
+**/*.xcodeproj/xcuserdata/
+**/*.xcodeproj/project.xcworkspace/xcuserdata/
+**/*.xcworkspace/xcuserdata/
+xcuserdata/
+**/xcuserdata/
+*.ipa
+*.dSYM.zip
+*.dSYM
+
+# Swift Package Manager
+.build/
+**/.build/
+.swiftpm/
+**/.swiftpm/
+
+# CocoaPods
+Pods/
+**/Pods/
+
+# UniFFI generated bindings in iOS
+ios/**/uniffi/
+
+# ====================================================================
+# Node.js / AWS Serverless (services-aws)
+# ====================================================================
+node_modules/
+**/node_modules/
+.serverless/
+**/.serverless/
+.webpack/
+**/.webpack/
+dist/
+**/dist/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# ====================================================================
+# Python (scripts & tooling)
+# ====================================================================
+__pycache__/
+**/__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+.venv/
+venv/
+ENV/
+env/
+
+# ====================================================================
+# Database & Storage files (local SQLite & DB snapshots)
+# ====================================================================
+*.sqlite
+*.sqlite3
+*.sqlite-journal
+*.sqlite-wal
+*.sqlite-shm
+*.db
+*.db-journal
+*.db-wal
+*.db-shm
+
+# ====================================================================
+# Logs & Temporary Build/Inspection Reports
+# ====================================================================
+*.log
+logs/
+**/logs/
+/build-errors.txt
+/hardcoded_report.txt
+
+# ====================================================================
+# Root Temporary Debug Scripts & Screenshots
+# ====================================================================
+/after_*.py
+/check_db.py
+/check_all_groups.py
+/filter_log.py
+/scan_log.py
+/screen*.png
+/device_screenshot.png
+/test.png
+
+# ====================================================================
+# IDEs & Editors
+# ====================================================================
+.idea/
+**/.idea/
+*.iml
+**/*.iml
+.vscode/
+**/.vscode/
+*.code-workspace
+.fleet/
+**/.fleet/
+*.swp
+*.swo
+*~
+
+# ====================================================================
+# Operating System
+# ====================================================================
+# Windows
+Thumbs.db
+Thumbs.db:encryptable
+ehthumbs.db
+ehthumbs_vista.db
+Desktop.ini
+$RECYCLE.BIN/
+
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+._*
+.Spotlight-V100
+.Trashes
+
+# ====================================================================
+# Secrets & Credentials
+# ====================================================================
+.env
+.env.*
+!.env.example
+!.env.*.example
+*.keystore
+*.jks
+*.pem
+*.key
+*.p8
+*.p12
+*.mobileprovision
+google-services.json

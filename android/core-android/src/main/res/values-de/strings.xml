@@ -1,0 +1,24 @@
+<resources>
+    <string name="skip_already_efficient">Bereits optimal komprimiert, übersprungen</string>
+    <string name="skip_too_small">Datei zu klein, übersprungen</string>
+    <string name="skip_not_worth">Geringe Einsparung, übersprungen</string>
+    <string name="skip_would_grow">Würde nach Komprimierung größer, übersprungen</string>
+    <string name="skip_hdr">HDR-Video noch nicht unterstützt, übersprungen</string>
+    <string name="skip_slowmo">Zeitlupenvideo nicht unterstützt, übersprungen</string>
+    <string name="skip_codec">Codec nicht unterstützt, übersprungen</string>
+    <string name="skip_raw">RAW-Format noch nicht unterstützt, übersprungen</string>
+    <string name="skip_gif">GIF-Animation noch nicht unterstützt, übersprungen</string>
+    <string name="skip_duration_mismatch">Dauerüberprüfung fehlgeschlagen, übersprungen</string>
+    <string name="skip_user_disabled">Vom Benutzer deaktiviert, übersprungen</string>
+    <string name="skip_target_unreachable">Zielgröße unerreichbar, übersprungen</string>
+    <string name="fail_probe">Analyse der Mediendatei fehlgeschlagen</string>
+    <string name="fail_decode">Dekodierung fehlgeschlagen</string>
+    <string name="fail_encode">Kodierung fehlgeschlagen</string>
+    <string name="fail_mux">Multiplexing fehlgeschlagen</string>
+    <string name="fail_disk_full">Speicherplatz reicht nicht aus</string>
+    <string name="fail_permission">Zugriffsberechtigung verweigert</string>
+    <string name="fail_invalid_output">Ungültige Ausgabedatei</string>
+    <string name="fail_cancelled">Abgebrochen</string>
+    <string name="fail_platform">Plattform-Encoder fehlgeschlagen</string>
+    <string name="fail_unknown">Unbekannter Fehler</string>
+</resources>

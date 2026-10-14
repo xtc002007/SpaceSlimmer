@@ -1,0 +1,24 @@
+<resources>
+    <string name="skip_already_efficient">已足够高效，跳过</string>
+    <string name="skip_too_small">文件过小，跳过</string>
+    <string name="skip_not_worth">预计收益不足，跳过</string>
+    <string name="skip_would_grow">压缩后更大，跳过</string>
+    <string name="skip_hdr">HDR 视频暂不支持，跳过</string>
+    <string name="skip_slowmo">慢动作视频暂不支持，跳过</string>
+    <string name="skip_codec">编码格式不支持，跳过</string>
+    <string name="skip_raw">RAW 格式暂不支持，跳过</string>
+    <string name="skip_gif">GIF 动图暂不支持，跳过</string>
+    <string name="skip_duration_mismatch">时长校验失败，跳过</string>
+    <string name="skip_user_disabled">用户禁用，跳过</string>
+    <string name="skip_target_unreachable">无法达到目标体积，跳过</string>
+    <string name="fail_probe">探测失败</string>
+    <string name="fail_decode">解码失败</string>
+    <string name="fail_encode">编码失败</string>
+    <string name="fail_mux">封装失败</string>
+    <string name="fail_disk_full">磁盘空间不足</string>
+    <string name="fail_permission">权限不足</string>
+    <string name="fail_invalid_output">输出无效</string>
+    <string name="fail_cancelled">已取消</string>
+    <string name="fail_platform">平台编码失败</string>
+    <string name="fail_unknown">未知错误</string>
+</resources>

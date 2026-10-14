@@ -1,0 +1,24 @@
+<resources>
+    <string name="skip_already_efficient">すでに最適化されています、スキップ</string>
+    <string name="skip_too_small">ファイルサイズが小さすぎるため、スキップ</string>
+    <string name="skip_not_worth">削減効果が低いため、スキップ</string>
+    <string name="skip_would_grow">圧縮後にサイズが増加するため、スキップ</string>
+    <string name="skip_hdr">HDR 動画は現在未対応です、スキップ</string>
+    <string name="skip_slowmo">スローモーション動画は現在未対応です、スキップ</string>
+    <string name="skip_codec">未対応のコーデックです、スキップ</string>
+    <string name="skip_raw">RAW 形式は現在未対応です、スキップ</string>
+    <string name="skip_gif">GIF アニメは現在未対応です、スキップ</string>
+    <string name="skip_duration_mismatch">再生時間の整合性チェックに失敗しました、スキップ</string>
+    <string name="skip_user_disabled">ユーザーにより無効化されました、スキップ</string>
+    <string name="skip_target_unreachable">目標サイズに到達できません、スキップ</string>
+    <string name="fail_probe">メディア検出に失敗しました</string>
+    <string name="fail_decode">デコードに失敗しました</string>
+    <string name="fail_encode">エンコードに失敗しました</string>
+    <string name="fail_mux">マルチプレクスに失敗しました</string>
+    <string name="fail_disk_full">ストレージの空き容量が不足しています</string>
+    <string name="fail_permission">アクセス権限がありません</string>
+    <string name="fail_invalid_output">出力ファイルが無効です</string>
+    <string name="fail_cancelled">キャンセルされました</string>
+    <string name="fail_platform">プラットフォームのエンコーダーが失敗しました</string>
+    <string name="fail_unknown">不明なエラーが発生しました</string>
+</resources>

@@ -1,0 +1,24 @@
+<resources>
+    <string name="skip_already_efficient">이미 최적화되어 있습니다, 건너뜀</string>
+    <string name="skip_too_small">파일이 너무 작습니다, 건너뜀</string>
+    <string name="skip_not_worth">압축 절감 효과가 부족합니다, 건너뜀</string>
+    <string name="skip_would_grow">압축 후 용량이 더 커집니다, 건너뜀</string>
+    <string name="skip_hdr">HDR 동영상은 현재 지원되지 않습니다, 건너뜀</string>
+    <string name="skip_slowmo">슬로모션 동영상은 현재 지원되지 않습니다, 건너뜀</string>
+    <string name="skip_codec">지원되지 않는 코덱입니다, 건너뜀</string>
+    <string name="skip_raw">RAW 포맷은 현재 지원되지 않습니다, 건너뜀</string>
+    <string name="skip_gif">GIF 애니메이션은 현재 지원되지 않습니다, 건너뜀</string>
+    <string name="skip_duration_mismatch">재생 시간 검증 실패, 건너뜀</string>
+    <string name="skip_user_disabled">사용자 설정으로 비활성화됨, 건너뜀</string>
+    <string name="skip_target_unreachable">목표 용량 도달 불가, 건너뜀</string>
+    <string name="fail_probe">미디어 분석 실패</string>
+    <string name="fail_decode">디코딩 실패</string>
+    <string name="fail_encode">인코딩 실패</string>
+    <string name="fail_mux">멀티플렉싱(Mux) 실패</string>
+    <string name="fail_disk_full">저장 공간 부족</string>
+    <string name="fail_permission">권한 부족</string>
+    <string name="fail_invalid_output">잘못된 출력 파일</string>
+    <string name="fail_cancelled">취소됨</string>
+    <string name="fail_platform">플랫폼 인코더 오류</string>
+    <string name="fail_unknown">알 수 없는 오류</string>
+</resources>

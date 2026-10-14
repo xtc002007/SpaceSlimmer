@@ -1,0 +1,30 @@
+name: rust
+
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: rust
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          components: rustfmt, clippy
+      - name: Format
+        run: cargo fmt --all -- --check
+      - name: Clippy
+        run: cargo clippy --workspace --all-targets -- -D warnings
+      - name: Test
+        run: cargo test --workspace
+      - name: Test ss-audio opus-encode (optional)
+        continue-on-error: true
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq libopus-dev
+          cargo test -p ss-audio --features opus-encode

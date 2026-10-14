@@ -1,0 +1,24 @@
+<resources>
+    <string name="skip_already_efficient">Déjà optimisé, ignoré</string>
+    <string name="skip_too_small">Fichier trop petit, ignoré</string>
+    <string name="skip_not_worth">Gain insuffisant, ignoré</string>
+    <string name="skip_would_grow">Deviendrait plus volumineux, ignoré</string>
+    <string name="skip_hdr">Vidéo HDR non prise en charge pour le moment, ignorée</string>
+    <string name="skip_slowmo">Vidéo au ralenti non prise en charge, ignorée</string>
+    <string name="skip_codec">Codec non pris en charge, ignoré</string>
+    <string name="skip_raw">Format RAW non pris en charge pour le moment, ignoré</string>
+    <string name="skip_gif">Animation GIF non prise en charge pour le moment, ignorée</string>
+    <string name="skip_duration_mismatch">Échec de vérification de la durée, ignoré</string>
+    <string name="skip_user_disabled">Désactivé par l’utilisateur, ignoré</string>
+    <string name="skip_target_unreachable">Taille cible inaccessible, ignoré</string>
+    <string name="fail_probe">Échec de l’analyse du fichier média</string>
+    <string name="fail_decode">Échec du décodage</string>
+    <string name="fail_encode">Échec de l’encodage</string>
+    <string name="fail_mux">Échec du multiplexage</string>
+    <string name="fail_disk_full">Espace de stockage insuffisant</string>
+    <string name="fail_permission">Autorisation refusée</string>
+    <string name="fail_invalid_output">Fichier de sortie non valide</string>
+    <string name="fail_cancelled">Annulé</string>
+    <string name="fail_platform">Échec de l’encodeur système</string>
+    <string name="fail_unknown">Erreur inconnue</string>
+</resources>

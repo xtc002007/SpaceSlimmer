@@ -1,0 +1,22 @@
+[package]
+name = "ss-audio"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+publish.workspace = true
+rust-version.workspace = true
+description = "Audio decode/encode pipeline (Sprint 4)."
+
+[lints]
+workspace = true
+
+[features]
+default = []
+opus-encode = ["dep:opus", "dep:ogg"]
+
+[dependencies]
+ss-domain.workspace = true
+symphonia = { version = "0.5", features = ["aac", "flac", "mp3", "pcm", "isomp4", "vorbis"] }
+thiserror.workspace = true
+opus = { version = "0.3", optional = true }
+ogg = { version = "0.9", optional = true }

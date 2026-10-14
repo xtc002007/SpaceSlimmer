@@ -1,0 +1,54 @@
+[workspace]
+resolver = "2"
+members = [
+    "crates/ss-core",
+    "crates/ss-domain",
+    "crates/ss-probe",
+    "crates/ss-image",
+    "crates/ss-audio",
+    "crates/ss-jobs",
+    "crates/ss-platform",
+    "crates/ss-sqlite",
+    "uniffi-bindgen",
+]
+
+[workspace.package]
+version = "0.1.0"
+edition = "2021"
+license = "MIT"
+publish = false
+rust-version = "1.82"
+
+[workspace.dependencies]
+ss-core = { path = "crates/ss-core" }
+ss-domain = { path = "crates/ss-domain" }
+ss-probe = { path = "crates/ss-probe" }
+ss-image = { path = "crates/ss-image" }
+ss-audio = { path = "crates/ss-audio" }
+ss-jobs = { path = "crates/ss-jobs" }
+ss-platform = { path = "crates/ss-platform" }
+ss-sqlite = { path = "crates/ss-sqlite" }
+thiserror = "2"
+uniffi = "0.29.4"
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+rusqlite = { version = "0.37", features = ["bundled"] }
+uuid = { version = "1", features = ["v4"] }
+parking_lot = "0.12"
+
+[workspace.lints.rust]
+unused = "warn"
+
+[workspace.metadata.features]
+# Phase-1 optional backends default off; enable per-target in ss-core.
+avif = "off"
+ffmpeg = "off"
+av1sw = "off"
+mp3 = "off"
+iap = "off"
+
+[profile.release]
+strip = true
+opt-level = "z"
+lto = true
+codegen-units = 1

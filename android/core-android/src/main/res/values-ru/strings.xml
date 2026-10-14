@@ -1,0 +1,24 @@
+<resources>
+    <string name="skip_already_efficient">Уже оптимально сжато, пропущено</string>
+    <string name="skip_too_small">Файл слишком мал, пропущено</string>
+    <string name="skip_not_worth">Незначительная экономия, пропущено</string>
+    <string name="skip_would_grow">Размер увеличится после сжатия, пропущено</string>
+    <string name="skip_hdr">HDR-видео пока не поддерживается, пропущено</string>
+    <string name="skip_slowmo">Замедленное видео не поддерживается, пропущено</string>
+    <string name="skip_codec">Кодек не поддерживается, пропущено</string>
+    <string name="skip_raw">Формат RAW пока не поддерживается, пропущено</string>
+    <string name="skip_gif">GIF-анимация пока не поддерживается, пропущено</string>
+    <string name="skip_duration_mismatch">Несовпадение длительности, пропущено</string>
+    <string name="skip_user_disabled">Отключено пользователем, пропущено</string>
+    <string name="skip_target_unreachable">Целевой размер недостижим, пропущено</string>
+    <string name="fail_probe">Ошибка анализа файла</string>
+    <string name="fail_decode">Ошибка декодирования</string>
+    <string name="fail_encode">Ошибка кодирования</string>
+    <string name="fail_mux">Ошибка мультиплексирования</string>
+    <string name="fail_disk_full">Недостаточно места на диске</string>
+    <string name="fail_permission">Отказано в доступе</string>
+    <string name="fail_invalid_output">Недопустимый выходной файл</string>
+    <string name="fail_cancelled">Отменено</string>
+    <string name="fail_platform">Сбой системного кодировщика</string>
+    <string name="fail_unknown">Неизвестная ошибка</string>
+</resources>

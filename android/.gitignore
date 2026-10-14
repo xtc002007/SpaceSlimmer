@@ -1,0 +1,16 @@
+*.iml
+.gradle
+/local.properties
+/.idea
+.DS_Store
+/build
+**/build
+**/src/main/jniLibs
+**/src/main/java/uniffi
+/captures
+.externalNativeBuild
+.cxx
+local.properties
+keystore.properties
+*.jks
+*.keystore

@@ -1,0 +1,148 @@
+plugins {
+    alias(libs.plugins.android.library)
+}
+
+android {
+    namespace "com.spaceslimmer.core"
+    compileSdk 36
+    ndkVersion "28.0.13004108"
+
+    defaultConfig {
+        minSdk 26
+        consumerProguardFiles "consumer-rules.pro"
+        ndk {
+            abiFilters "arm64-v8a", "x86_64"
+        }
+    }
+
+    buildTypes {
+        release {
+            minifyEnabled false
+            proguardFiles getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro"
+        }
+    }
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
+    }
+
+    packaging {
+        jniLibs {
+            useLegacyPackaging false
+        }
+    }
+}
+
+dependencies {
+    implementation libs.androidx.core.ktx
+    implementation "androidx.appcompat:appcompat:1.7.0"
+    implementation "androidx.documentfile:documentfile:1.0.1"
+    implementation "net.java.dev.jna:jna:5.18.1@aar"
+}
+
+def rustDir = rootProject.file("../rust")
+def jniDir = file("src/main/jniLibs")
+def soArm = file("src/main/jniLibs/arm64-v8a/libss_core.so")
+def uniffiOut = file("src/main/java")
+def ndkVersion = "28.0.13004108"
+def localProps = new Properties()
+def localPropsFile = rootProject.file("local.properties")
+if (localPropsFile.exists()) {
+    localPropsFile.withInputStream { localProps.load(it) }
+}
+def sdkDir = localProps.getProperty("sdk.dir")
+def ndkHome = System.getenv("ANDROID_NDK_HOME")
+    ?: System.getenv("ANDROID_NDK_ROOT")
+    ?: (sdkDir ? new File(sdkDir, "ndk/${ndkVersion}") : null)
+def cargoBin = new File(System.getProperty("user.home"), ".cargo/bin")
+def pathWithCargo = cargoBin.absolutePath + File.pathSeparator + (System.getenv("PATH") ?: "")
+
+def isWindows = System.getProperty("os.name").toLowerCase().contains("windows")
+def isReleaseBuild = gradle.startParameter.taskNames.any { it.toLowerCase().contains("release") }
+def rustProfile = isReleaseBuild ? "release" : "debug"
+def rustProfileFlag = isReleaseBuild ? "--release" : ""
+// Windows debug: audiopus_sys CMake often fails cross-compiling; release/CI still use opus-encode.
+def defaultRustFeatures = (isWindows && !isReleaseBuild) ? "" : "opus-encode"
+def rustFeatures = localProps.getProperty("rust.features", defaultRustFeatures)
+def rustFeatureFlag = rustFeatures?.trim() ? "--features ${rustFeatures.trim()}" : "--no-default-features"
+def cargoNdkCmd = "cargo ndk -t arm64-v8a -t x86_64 build ${rustProfileFlag} -p ss-core ${rustFeatureFlag}".trim()
+def uniffiCmd = "cargo run -p uniffi-bindgen -- generate --library \"${soArm.absolutePath}\" --language kotlin --out-dir \"${uniffiOut.absolutePath}\""
+
+def rustTargetAbis = [
+    "arm64-v8a": "aarch64-linux-android",
+    "x86_64": "x86_64-linux-android",
+]
+
+tasks.register("buildRustCore", Exec) {
+    workingDir rustDir
+    environment "ANDROID_NDK_HOME", ndkHome
+    environment "ANDROID_NDK_ROOT", ndkHome
+    environment "PATH", pathWithCargo
+    environment "CMAKE_POLICY_VERSION_MINIMUM", "3.5"
+    environment "CMAKE_GENERATOR", "Ninja"
+    def cmakeSearchDirs = [
+        ndkHome ? new File(ndkHome, "cmake") : null,
+        sdkDir ? new File(sdkDir, "cmake") : null
+    ].findAll { it != null && it.exists() }
+    def cmakeBins = cmakeSearchDirs.collectMany { dir ->
+        dir.listFiles()?.collectMany { ver ->
+            def bin = new File(ver, "bin")
+            bin.exists() ? [bin.absolutePath] : []
+        } ?: []
+    }
+    if (!cmakeBins.isEmpty()) {
+        environment "PATH", cmakeBins.join(File.pathSeparator) + File.pathSeparator + pathWithCargo
+    }
+    if (ndkHome && rustFeatures?.trim()?.contains("opus-encode")) {
+        def toolchain = new File(ndkHome, "build/cmake/android.toolchain.cmake")
+        if (toolchain.exists()) {
+            environment "CMAKE_TOOLCHAIN_FILE", toolchain.absolutePath
+        }
+    }
+    if (isWindows) {
+        commandLine "cmd", "/c", cargoNdkCmd
+    } else {
+        commandLine "sh", "-c", cargoNdkCmd
+    }
+    inputs.dir new File(rustDir, "crates")
+    inputs.property "rustProfile", rustProfile
+    outputs.file soArm
+    doLast {
+        rustTargetAbis.each { abi, targetTriple ->
+            def builtSo = new File(rustDir, "target/${targetTriple}/${rustProfile}/libss_core.so")
+            if (!builtSo.exists()) {
+                throw new GradleException("Missing Rust artifact: ${builtSo.absolutePath}")
+            }
+            def dest = new File(jniDir, "${abi}/libss_core.so")
+            dest.parentFile.mkdirs()
+            dest.bytes = builtSo.bytes
+        }
+    }
+}
+
+tasks.register("generateUniffiBindings", Exec) {
+    dependsOn "buildRustCore"
+    workingDir rustDir
+    environment "PATH", pathWithCargo
+    doFirst {
+        uniffiOut.mkdirs()
+    }
+    if (isWindows) {
+        commandLine "cmd", "/c", uniffiCmd
+    } else {
+        commandLine "sh", "-c", uniffiCmd
+    }
+    inputs.file soArm
+    outputs.dir new File(uniffiOut, "uniffi")
+}
+
+tasks.named("preBuild").configure {
+    dependsOn "generateUniffiBindings"
+}
+
+tasks.configureEach { task ->
+    if (task.name.startsWith("compile") && task.name.contains("Kotlin")) {
+        task.dependsOn "generateUniffiBindings"
+    }
+}

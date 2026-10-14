@@ -1,0 +1,24 @@
+<resources>
+    <string name="skip_already_efficient">已足夠高效，略過</string>
+    <string name="skip_too_small">檔案過小，略過</string>
+    <string name="skip_not_worth">預計收益不足，略過</string>
+    <string name="skip_would_grow">壓縮後更大，略過</string>
+    <string name="skip_hdr">暫不支援 HDR 影片，略過</string>
+    <string name="skip_slowmo">暫不支援慢動作影片，略過</string>
+    <string name="skip_codec">編碼格式不支援，略過</string>
+    <string name="skip_raw">暫不支援 RAW 格式，略過</string>
+    <string name="skip_gif">暫不支援 GIF 動圖，略過</string>
+    <string name="skip_duration_mismatch">時長校驗失敗，略過</string>
+    <string name="skip_user_disabled">使用者已停用，略過</string>
+    <string name="skip_target_unreachable">無法達到目標大小，略過</string>
+    <string name="fail_probe">探測失敗</string>
+    <string name="fail_decode">解碼失敗</string>
+    <string name="fail_encode">編碼失敗</string>
+    <string name="fail_mux">封裝失敗</string>
+    <string name="fail_disk_full">磁碟空間不足</string>
+    <string name="fail_permission">權限不足</string>
+    <string name="fail_invalid_output">輸出無效</string>
+    <string name="fail_cancelled">已取消</string>
+    <string name="fail_platform">平台編碼失敗</string>
+    <string name="fail_unknown">未知錯誤</string>
+</resources>

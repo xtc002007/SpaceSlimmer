@@ -1,0 +1,10 @@
+<resources>
+    <color name="ss_primary">#FF7A9BC8</color>
+    <color name="ss_on_primary">#FF0B0D12</color>
+    <color name="ss_surface">#FF1A1D26</color>
+    <color name="ss_background">#FF0B0D12</color>
+    <color name="ss_saved">#FF5CB87A</color>
+    <color name="ss_on_surface">#FFF3F4F6</color>
+    <color name="ss_on_surface_variant">#FF9CA3AF</color>
+    <color name="ss_outline">#FF3F4450</color>
+</resources>

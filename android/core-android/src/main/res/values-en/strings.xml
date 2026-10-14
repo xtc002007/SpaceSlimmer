@@ -1,0 +1,24 @@
+<resources>
+    <string name="skip_already_efficient">Already efficient, skipped</string>
+    <string name="skip_too_small">Too small, skipped</string>
+    <string name="skip_not_worth">Not worth compressing, skipped</string>
+    <string name="skip_would_grow">Would grow in size, skipped</string>
+    <string name="skip_hdr">HDR video not supported, skipped</string>
+    <string name="skip_slowmo">Slow motion not supported, skipped</string>
+    <string name="skip_codec">Codec not supported, skipped</string>
+    <string name="skip_raw">RAW format not supported, skipped</string>
+    <string name="skip_gif">GIF not supported, skipped</string>
+    <string name="skip_duration_mismatch">Duration mismatch, skipped</string>
+    <string name="skip_user_disabled">User disabled, skipped</string>
+    <string name="skip_target_unreachable">Target size unreachable, skipped</string>
+    <string name="fail_probe">Probe failed</string>
+    <string name="fail_decode">Decode failed</string>
+    <string name="fail_encode">Encode failed</string>
+    <string name="fail_mux">Mux failed</string>
+    <string name="fail_disk_full">Disk full</string>
+    <string name="fail_permission">Permission denied</string>
+    <string name="fail_invalid_output">Invalid output</string>
+    <string name="fail_cancelled">Cancelled</string>
+    <string name="fail_platform">Platform encoder failed</string>
+    <string name="fail_unknown">Unknown error</string>
+</resources>

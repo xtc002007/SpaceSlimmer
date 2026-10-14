@@ -1,0 +1,24 @@
+<resources>
+    <string name="skip_already_efficient">Já está otimizado, ignorado</string>
+    <string name="skip_too_small">Arquivo muito pequeno, ignorado</string>
+    <string name="skip_not_worth">Ganho insignificante, ignorado</string>
+    <string name="skip_would_grow">Ficaria maior após a compressão, ignorado</string>
+    <string name="skip_hdr">Vídeo HDR ainda não suportado, ignorado</string>
+    <string name="skip_slowmo">Vídeo em câmera lenta não suportado, ignorado</string>
+    <string name="skip_codec">Codec não suportado, ignorado</string>
+    <string name="skip_raw">Formato RAW ainda não suportado, ignorado</string>
+    <string name="skip_gif">GIF animado ainda não suportado, ignorado</string>
+    <string name="skip_duration_mismatch">Falha na verificação de duração, ignorado</string>
+    <string name="skip_user_disabled">Desativado pelo usuário, ignorado</string>
+    <string name="skip_target_unreachable">Incapaz de atingir o tamanho alvo, ignorado</string>
+    <string name="fail_probe">Falha ao analisar arquivo</string>
+    <string name="fail_decode">Falha na decodificação</string>
+    <string name="fail_encode">Falha na codificação</string>
+    <string name="fail_mux">Falha na multiplexação</string>
+    <string name="fail_disk_full">Espaço em disco insuficiente</string>
+    <string name="fail_permission">Permissão negada</string>
+    <string name="fail_invalid_output">Arquivo de saída inválido</string>
+    <string name="fail_cancelled">Cancelado</string>
+    <string name="fail_platform">Falha no codificador do sistema</string>
+    <string name="fail_unknown">Erro desconhecido</string>
+</resources>

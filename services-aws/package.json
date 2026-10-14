@@ -1,0 +1,21 @@
+{
+  "name": "spaceslimmer-backend",
+  "version": "1.0.0",
+  "description": "SpaceSlimmer Lightweight Backend Service (Auth & Subscription Quota)",
+  "main": "src/handlers/auth.js",
+  "scripts": {
+    "setup-db": "node src/handlers/setup.js",
+    "test": "node test/run-tests.js",
+    "offline": "serverless offline",
+    "deploy": "serverless deploy"
+  },
+  "dependencies": {
+    "@aws-sdk/client-dynamodb": "^3.957.0",
+    "@aws-sdk/lib-dynamodb": "^3.957.0",
+    "bcryptjs": "^3.0.3"
+  },
+  "devDependencies": {
+    "serverless": "^3.38.0",
+    "serverless-offline": "^13.3.0"
+  }
+}

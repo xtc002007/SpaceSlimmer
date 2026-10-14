@@ -1,0 +1,103 @@
+service: spaceslimmer-backend
+useDotenv: true
+
+custom:
+  apiCors:
+    origin:
+      - '*'
+    headers:
+      - Content-Type
+      - Authorization
+      - X-Client-Version
+      - X-Device-Id
+    allowCredentials: false
+
+provider:
+  name: aws
+  runtime: nodejs18.x
+  region: us-east-2
+  stage: dev
+  apiGateway:
+    usagePlan:
+      throttle:
+        burstLimit: 100
+        rateLimit: 50
+  iam:
+    role:
+      statements:
+        - Effect: Allow
+          Action:
+            - dynamodb:GetItem
+            - dynamodb:PutItem
+            - dynamodb:UpdateItem
+            - dynamodb:DeleteItem
+            - dynamodb:Scan
+            - dynamodb:Query
+          Resource:
+            - arn:aws:dynamodb:*:*:table/spaceslimmer-*
+            - arn:aws:dynamodb:*:*:table/spaceslimmer-*/index/*
+  environment:
+    JWT_SECRET: ${env:JWT_SECRET, 'spaceslimmer-dev-secret-key-2026'}
+    NODE_ENV: ${env:NODE_ENV, 'production'}
+
+functions:
+  # ---- User Authentication Module ----
+  authRegister:
+    handler: src/handlers/auth.register
+    events:
+      - http:
+          path: api/auth/register
+          method: post
+          cors: ${self:custom.apiCors}
+
+  authLogin:
+    handler: src/handlers/auth.login
+    events:
+      - http:
+          path: api/auth/login
+          method: post
+          cors: ${self:custom.apiCors}
+
+  authMe:
+    handler: src/handlers/auth.me
+    events:
+      - http:
+          path: api/auth/me
+          method: get
+          cors: ${self:custom.apiCors}
+
+  authLogout:
+    handler: src/handlers/auth.logout
+    events:
+      - http:
+          path: api/auth/logout
+          method: post
+          cors: ${self:custom.apiCors}
+
+  # ---- Subscription & Quota Module ----
+  getSubscriptionStatus:
+    handler: src/handlers/subscription.getStatus
+    events:
+      - http:
+          path: api/subscription/status
+          method: get
+          cors: ${self:custom.apiCors}
+
+  consumeQuota:
+    handler: src/handlers/subscription.consume
+    events:
+      - http:
+          path: api/subscription/consume
+          method: post
+          cors: ${self:custom.apiCors}
+
+  activateLicense:
+    handler: src/handlers/subscription.activate
+    events:
+      - http:
+          path: api/subscription/activate
+          method: post
+          cors: ${self:custom.apiCors}
+
+plugins:
+  - serverless-offline
