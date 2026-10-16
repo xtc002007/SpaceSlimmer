@@ -266,16 +266,18 @@ object GalleryWriter {
         val origTimestamps = queryTimestamps(context, uri) ?: queryTimestamps(context, uriFrom(sourceUri))
         origTimestamps?.dateTaken?.let { dtMs -> runCatching { file.setLastModified(dtMs) } }
         writeFileToUri(context, outputPath, uri)
+        val audioMime = if (outputPath.endsWith(".m4a", true)) "audio/mp4" else "audio/mpeg"
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
             runCatching {
                 val values = ContentValues().apply {
+                    put(MediaStore.Audio.Media.MIME_TYPE, audioMime)
                     put(MediaStore.Audio.Media.SIZE, file.length())
                     origTimestamps?.dateModified?.let { put(MediaStore.Audio.Media.DATE_MODIFIED, it) }
                 }
                 context.contentResolver.update(uri, values, null, null)
             }
         }
-        reveal(context, uri, "audio/mpeg")
+        reveal(context, uri, audioMime)
         return uri
     }
 

@@ -22,6 +22,8 @@ object VaultManager {
         val mimeType: String?,
     )
 
+    data class VaultBackup(val id: String, val path: String)
+
     fun copyToVault(
         context: Context,
         engine: CoreEngine,
@@ -29,59 +31,80 @@ object VaultManager {
         localPath: String?,
         jobId: String,
         vaultDays: UInt,
-    ): String {
+    ): VaultBackup {
         val vaultRoot = File(engine.vaultDir())
         vaultRoot.mkdirs()
         val baseId = UUID.randomUUID().toString()
         val vaultFile = File(vaultRoot, "$baseId.bak")
-        val bytes = when {
-            localPath != null && File(localPath).isFile -> {
-                File(localPath).copyTo(vaultFile, overwrite = true)
-                File(localPath).length()
-            }
-            else -> {
-                context.contentResolver.openInputStream(Uri.parse(sourceUri))?.use { input ->
-                    vaultFile.outputStream().use { output -> input.copyTo(output) }
-                } ?: error("cannot read source for vault")
-                vaultFile.length()
-            }
-        }
-
-        // Query metadata from sourceUri before replacing!
-        val resolvedUri = runCatching { GalleryWriter.resolveReplaceUri(context, sourceUri) }.getOrNull()
-        val targetQueryUri = resolvedUri ?: Uri.parse(sourceUri)
-        val nameFromStore = GalleryWriter.queryDisplayName(context, targetQueryUri)
-            ?: runCatching {
-                context.contentResolver.query(Uri.parse(sourceUri), arrayOf(OpenableColumns.DISPLAY_NAME), null, null, null)?.use { c ->
-                    if (c.moveToFirst()) c.getString(0) else null
-                }
-            }.getOrNull() ?: localPath?.let { File(it).name }
-        val pubPath = resolvedUri?.let { GalleryWriter.queryPublicPath(context, it) } ?: localPath
-        val timestamps = resolvedUri?.let { GalleryWriter.queryTimestamps(context, it) }
-        val dateTaken = timestamps?.dateTaken
-            ?: GalleryWriter.parseDateFromFilename(nameFromStore ?: "")
-            ?: GalleryWriter.parseDateFromFilename(sourceUri.substringAfterLast('/'))
-            ?: (timestamps?.dateModified?.let { it * 1000 })
-
-        // Save sidecar .meta file
         val metaFile = File(vaultRoot, "$baseId.meta")
-        runCatching {
-            metaFile.writeText(
-                "displayName=${nameFromStore.orEmpty()}\n" +
-                "originalPath=${pubPath.orEmpty()}\n" +
-                "dateTakenMs=${dateTaken ?: 0L}\n" +
-                "size=$bytes\n"
-            )
-        }
+        try {
+            val bytes = when {
+                localPath != null && File(localPath).isFile -> {
+                    File(localPath).copyTo(vaultFile, overwrite = true)
+                    File(localPath).length()
+                }
+                else -> {
+                    context.contentResolver.openInputStream(Uri.parse(sourceUri))?.use { input ->
+                        vaultFile.outputStream().use { output -> input.copyTo(output) }
+                    } ?: error("cannot read source for vault")
+                    vaultFile.length()
+                }
+            }
 
-        val expiresAt = System.currentTimeMillis() / 1000 + vaultDays.toLong() * 86_400
-        return engine.registerVaultBackup(
-            jobId = jobId,
-            vaultPath = vaultFile.absolutePath,
-            originalUri = sourceUri,
-            originalBytes = bytes.toULong(),
-            expiresAt = expiresAt,
-        )
+            // Query metadata from sourceUri before replacing!
+            val resolvedUri = runCatching { GalleryWriter.resolveReplaceUri(context, sourceUri) }.getOrNull()
+            val targetQueryUri = resolvedUri ?: Uri.parse(sourceUri)
+            val nameFromStore = GalleryWriter.queryDisplayName(context, targetQueryUri)
+                ?: runCatching {
+                    context.contentResolver.query(Uri.parse(sourceUri), arrayOf(OpenableColumns.DISPLAY_NAME), null, null, null)?.use { c ->
+                        if (c.moveToFirst()) c.getString(0) else null
+                    }
+                }.getOrNull() ?: localPath?.let { File(it).name }
+            val pubPath = resolvedUri?.let { GalleryWriter.queryPublicPath(context, it) } ?: localPath
+            val timestamps = resolvedUri?.let { GalleryWriter.queryTimestamps(context, it) }
+            val dateTaken = timestamps?.dateTaken
+                ?: GalleryWriter.parseDateFromFilename(nameFromStore ?: "")
+                ?: GalleryWriter.parseDateFromFilename(sourceUri.substringAfterLast('/'))
+                ?: (timestamps?.dateModified?.let { it * 1000 })
+
+            // Save sidecar .meta file
+            runCatching {
+                metaFile.writeText(
+                    "displayName=${nameFromStore.orEmpty()}\n" +
+                    "originalPath=${pubPath.orEmpty()}\n" +
+                    "dateTakenMs=${dateTaken ?: 0L}\n" +
+                    "size=$bytes\n"
+                )
+            }
+
+            val expiresAt = System.currentTimeMillis() / 1000 + vaultDays.toLong() * 86_400
+            val id = engine.registerVaultBackup(
+                jobId = jobId,
+                vaultPath = vaultFile.absolutePath,
+                originalUri = sourceUri,
+                originalBytes = bytes.toULong(),
+                expiresAt = expiresAt,
+            )
+            return VaultBackup(id = id, path = vaultFile.absolutePath)
+        } catch (t: Throwable) {
+            runCatching { if (vaultFile.isFile) vaultFile.delete() }
+            runCatching { if (metaFile.isFile) metaFile.delete() }
+            throw t
+        }
+    }
+
+    fun rollbackVaultBackup(engine: CoreEngine, vaultId: String?, vaultPath: String?) {
+        if (!vaultId.isNullOrBlank()) {
+            runCatching { engine.deleteVaultItem(vaultId) }
+        }
+        if (!vaultPath.isNullOrBlank()) {
+            runCatching {
+                val vf = File(vaultPath)
+                if (vf.isFile) vf.delete()
+                val mf = File(vf.parentFile, "${vf.nameWithoutExtension}.meta")
+                if (mf.isFile) mf.delete()
+            }
+        }
     }
 
     fun readMeta(context: Context, vaultPath: String, originalUri: String): Meta {

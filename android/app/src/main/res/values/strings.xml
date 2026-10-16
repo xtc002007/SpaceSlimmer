@@ -47,6 +47,10 @@
     <string name="media_total_saved">Total saved %1$s</string>
     <string name="media_save_gallery">Save to gallery</string>
     <string name="media_saved_to_gallery">Saved %1$d to the SpaceSlimmer album</string>
+    <string name="audio_save_library">Save to library</string>
+    <string name="audio_saved_to_library">Saved %1$d audio files to music folder</string>
+    <string name="audio_replace_library">Replace original audio</string>
+    <string name="audio_replaced_count">Replaced %1$d audio files</string>
     <string name="preset_image_max">Highest</string>
     <string name="preset_image_high">High</string>
     <string name="preset_image_small">Small</string>
@@ -99,6 +103,7 @@
     <string name="notify_title">SpaceSlimmer</string>
     <string name="notify_idle">Waiting for jobs</string>
     <string name="notify_progress">%1$d/%2$d done, saved %3$s</string>
+    <string name="notify_complete">Compression complete: %1$d/%2$d done, saved %3$s</string>
     <string name="estimate_summary">Est. %1$d items, output ~%2$s–%3$s</string>
     <string name="estimate_skip_count">%1$d will be skipped</string>
     <string name="compat_title">Compatibility</string>
@@ -196,6 +201,7 @@
     <string name="preset_video_target_size">Target size</string>
     <string name="preset_video_custom">Custom</string>
     <string name="target_size_mb">Target size (MB)</string>
+    <string name="target_size_per_video_hint">Applies to each video individually. Videos already smaller than this limit will be kept as-is.</string>
     <string name="resolution_label">Max resolution</string>
     <string name="resolution_keep">Keep</string>
     <string name="compat_more_efficient">More efficient</string>

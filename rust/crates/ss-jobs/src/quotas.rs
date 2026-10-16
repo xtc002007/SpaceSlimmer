@@ -2,7 +2,7 @@
 
 pub const DEFAULT_VIDEO_PARALLELISM: u32 = 1;
 pub const DEFAULT_FAST_VIDEO_PARALLELISM: u32 = 2;
-pub const DEFAULT_IMAGE_PARALLELISM: u32 = 4;
+pub const DEFAULT_IMAGE_PARALLELISM: u32 = 2;
 pub const DEFAULT_AUDIO_PARALLELISM: u32 = 4;
 
 /// Rough per-image decode budget for quota math (~50MB RGBA worst case).
@@ -45,7 +45,7 @@ pub fn quotas_for_profile(
     let base = match profile {
         ParallelProfile::Auto => ParallelQuotas {
             video: DEFAULT_VIDEO_PARALLELISM,
-            image: image_cap.min(4),
+            image: image_cap.min(2),
             audio: DEFAULT_AUDIO_PARALLELISM,
         },
         ParallelProfile::Fast => ParallelQuotas {
@@ -54,12 +54,12 @@ pub fn quotas_for_profile(
             } else {
                 DEFAULT_VIDEO_PARALLELISM
             },
-            image: image_cap.min(8),
+            image: image_cap.min(4),
             audio: 6,
         },
         ParallelProfile::Eco => ParallelQuotas {
             video: DEFAULT_VIDEO_PARALLELISM,
-            image: 2,
+            image: 1,
             audio: 2,
         },
     };
@@ -67,7 +67,7 @@ pub fn quotas_for_profile(
     if thermal_level >= 2 {
         ParallelQuotas {
             video: 1,
-            image: base.image.min(2),
+            image: base.image.min(1),
             audio: base.audio.min(2),
         }
     } else {

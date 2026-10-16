@@ -97,6 +97,10 @@ class SpaceSlimmerApp : Application() {
                 if (importCache.isDirectory) {
                     importCache.deleteRecursively()
                 }
+                val stagingDir = java.io.File(cacheDir, "spaceslimmer/staging")
+                if (stagingDir.isDirectory) {
+                    stagingDir.deleteRecursively()
+                }
                 cacheDir.listFiles()?.forEach { file ->
                     if (file.name.startsWith("planb-import-") || file.name.startsWith("spaceslimmer-")) {
                         file.delete()

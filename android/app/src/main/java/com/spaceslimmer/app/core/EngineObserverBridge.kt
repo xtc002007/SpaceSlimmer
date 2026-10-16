@@ -16,6 +16,7 @@ import uniffi.ss_core.CoreEngine
 import uniffi.ss_core.CoreObserver
 import uniffi.ss_core.FailReason
 import uniffi.ss_core.GroupView
+import uniffi.ss_core.JobState
 import uniffi.ss_core.JobView
 import uniffi.ss_core.MediaKind
 import uniffi.ss_core.Recipe
@@ -37,15 +38,27 @@ class EngineObserverBridge(
         AppLogger.d(TAG, "onGroupChanged: group=${group.id}, running=${group.running}, done=${group.done}, failed=${group.failed}, skipped=${group.skipped}")
         EngineEventHub.emitGroup(group)
         CompressForegroundService.update(context, group)
-        if (com.spaceslimmer.app.viewmodel.CompressSession.isGroupFinished(group) && group.savedBytes > 0) {
-            com.spaceslimmer.app.prefs.AppPrefs.recordFinishedGroup(context, group.id, group.savedBytes)
-            com.spaceslimmer.app.widget.WeeklySavingsWidget.refresh(context)
+        if (com.spaceslimmer.app.viewmodel.CompressSession.isGroupFinished(group)) {
+            CompressForegroundService.completeAndStop(context, group)
+            if (group.savedBytes > 0) {
+                com.spaceslimmer.app.prefs.AppPrefs.recordFinishedGroup(context, group.id, group.savedBytes)
+                com.spaceslimmer.app.widget.WeeklySavingsWidget.refresh(context)
+            }
         }
     }
 
     override fun onJobChanged(job: JobView) {
         AppLogger.d(TAG, "onJobChanged: job=${job.spec.id}, state=${job.state}, progress=${(job.progress * 100).toInt()}%")
         EngineEventHub.emitJob(job)
+        if (job.state == JobState.SUCCEEDED || job.state == JobState.FAILED || job.state == JobState.SKIPPED || job.state == JobState.COMMITTED_REPLACE) {
+            val localPath = job.spec.localPath
+            if (!localPath.isNullOrBlank() && (localPath.contains("spaceslimmer/staging") || localPath.contains("spaceslimmer/import"))) {
+                runCatching {
+                    val f = File(localPath)
+                    if (f.isFile) f.delete()
+                }
+            }
+        }
     }
 
     override fun requestStartVideo(jobId: String, recipe: Recipe, src: String, dst: String) {

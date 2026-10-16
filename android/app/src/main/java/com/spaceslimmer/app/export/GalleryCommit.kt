@@ -3,6 +3,8 @@ package com.spaceslimmer.app.export
 import android.app.PendingIntent
 import android.content.Context
 import android.net.Uri
+import android.os.Build
+import android.provider.MediaStore
 import com.spaceslimmer.core.GalleryWriter
 import com.spaceslimmer.core.VaultManager
 import com.spaceslimmer.core.WriteConsentRequired
@@ -42,7 +44,7 @@ object GalleryCommit {
         context: Context,
         core: CoreEngine,
         group: GroupView,
-        kind: MediaKind,
+        kind: MediaKind? = null,
         policy: OutputPolicy,
     ): GallerySaveOutcome {
         val jobs = savableJobs(group)
@@ -51,15 +53,16 @@ object GalleryCommit {
         val replaceRequested = policy == OutputPolicy.REPLACE_TO_VAULT ||
             policy == OutputPolicy.REPLACE_AFTER_CONFIRM
         if (replaceRequested) {
-            val replaceable = jobs.filter { GalleryWriter.canAttemptReplace(context, it.spec.sourceUri, kind) }
-            val missingWrite = replaceable.filter { !GalleryWriter.hasDirectWriteAccess(context, it.spec.sourceUri, kind) }
+            val replaceable = jobs.filter { GalleryWriter.canAttemptReplace(context, it.spec.sourceUri, it.spec.fingerprint.kind) }
+            val missingWrite = replaceable.filter { !GalleryWriter.hasDirectWriteAccess(context, it.spec.sourceUri, it.spec.fingerprint.kind) }
             if (missingWrite.isNotEmpty()) {
-                val pending = GalleryWriter.writeConsentIntent(
-                    context,
-                    missingWrite.map { it.spec.sourceUri },
-                    kind,
-                )
-                if (pending != null) return GallerySaveOutcome.NeedWriteConsent(pending)
+                val uris = missingWrite.mapNotNull { job ->
+                    GalleryWriter.resolveReplaceUri(context, job.spec.sourceUri, job.spec.fingerprint.kind)
+                }
+                if (uris.isNotEmpty() && Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+                    val pending = MediaStore.createWriteRequest(context.contentResolver, uris)
+                    return GallerySaveOutcome.NeedWriteConsent(pending)
+                }
             }
         }
 
@@ -69,23 +72,23 @@ object GalleryCommit {
         var asNew = 0
         com.spaceslimmer.core.AppLogger.i(
             "GalleryCommit",
-            "saveSucceeded start: ${jobs.size} jobs, policy=$policy, kind=$kind, replaceRequested=$replaceRequested",
+            "saveSucceeded start: ${jobs.size} jobs, policy=$policy, replaceRequested=$replaceRequested",
         )
         return try {
             jobs.forEachIndexed { index, job ->
                 val output = job.outputUri ?: return@forEachIndexed
-                val canRep = GalleryWriter.canAttemptReplace(context, job.spec.sourceUri, kind)
-                val didReplace = replaceRequested &&
-                    commitOne(
-                        context = context,
-                        core = core,
-                        job = job,
-                        kind = kind,
-                        output = output,
-                        index = index,
-                        replace = canRep,
-                        vaultDays = vaultDays,
-                    )
+                val actualKind = job.spec.fingerprint.kind
+                val canRep = GalleryWriter.canAttemptReplace(context, job.spec.sourceUri, actualKind)
+                val didReplace = commitOne(
+                    context = context,
+                    core = core,
+                    job = job,
+                    kind = actualKind,
+                    output = output,
+                    index = index,
+                    replace = replaceRequested && canRep,
+                    vaultDays = vaultDays,
+                )
                 if (didReplace) replaced += 1 else asNew += 1
                 saved += 1
 
@@ -124,19 +127,21 @@ object GalleryCommit {
         context: Context,
         core: CoreEngine,
         job: JobView,
-        kind: MediaKind,
+        kind: MediaKind = job.spec.fingerprint.kind,
         output: String,
         index: Int,
         replace: Boolean,
         vaultDays: UInt,
     ): Boolean {
+        val actualKind = job.spec.fingerprint.kind
         if (replace) {
+            var backup: VaultManager.VaultBackup? = null
             try {
                 com.spaceslimmer.core.AppLogger.i(
                     "GalleryCommit",
-                    "Attempting replace for job ${job.spec.id}: src=${job.spec.sourceUri}",
+                    "Attempting replace for job ${job.spec.id}: src=${job.spec.sourceUri}, kind=$actualKind",
                 )
-                VaultManager.copyToVault(
+                backup = VaultManager.copyToVault(
                     context = context,
                     engine = core,
                     sourceUri = job.spec.sourceUri,
@@ -145,7 +150,7 @@ object GalleryCommit {
                     vaultDays = vaultDays,
                 )
                 com.spaceslimmer.core.AppLogger.i("GalleryCommit", "copyToVault succeeded for job ${job.spec.id}")
-                when (kind) {
+                when (actualKind) {
                     MediaKind.IMAGE -> GalleryWriter.replaceImage(
                         context = context,
                         sourceUri = job.spec.sourceUri,
@@ -160,34 +165,37 @@ object GalleryCommit {
                 com.spaceslimmer.core.AppLogger.i("GalleryCommit", "replace succeeded and marked for job ${job.spec.id}")
                 return true
             } catch (consent: WriteConsentRequired) {
+                backup?.let { VaultManager.rollbackVaultBackup(core, it.id, it.path) }
                 throw consent
             } catch (t: Throwable) {
+                backup?.let { VaultManager.rollbackVaultBackup(core, it.id, it.path) }
                 com.spaceslimmer.core.AppLogger.e(
                     "GalleryCommit",
                     "Replace failed for job ${job.spec.id}, falling back to saveAsNew: ${t.message}",
                     t,
                 )
-                saveAsNew(context, job, kind, output, index)
+                saveAsNew(context, job, actualKind, output, index)
                 return false
             }
         }
-        com.spaceslimmer.core.AppLogger.i("GalleryCommit", "Executing saveAsNew for job ${job.spec.id}")
-        saveAsNew(context, job, kind, output, index)
+        com.spaceslimmer.core.AppLogger.i("GalleryCommit", "Executing saveAsNew for job ${job.spec.id}, kind=$actualKind")
+        saveAsNew(context, job, actualKind, output, index)
         return false
     }
 
     private fun saveAsNew(
         context: Context,
         job: JobView,
-        kind: MediaKind,
+        kind: MediaKind = job.spec.fingerprint.kind,
         output: String,
         index: Int,
     ) {
-        val relative = ExportNaming.relativePath(context, kind)
+        val actualKind = job.spec.fingerprint.kind
+        val relative = ExportNaming.relativePath(context, actualKind)
         val fp = job.spec.fingerprint
         val recipe = job.decision?.recipe
         val srcUri = runCatching { Uri.parse(job.spec.sourceUri) }.getOrNull()
-        val resolvedUri = GalleryWriter.resolveReplaceUri(context, job.spec.sourceUri, kind) ?: srcUri
+        val resolvedUri = GalleryWriter.resolveReplaceUri(context, job.spec.sourceUri, actualKind) ?: srcUri
         val timestamps = GalleryWriter.queryTimestamps(context, resolvedUri)
             ?: GalleryWriter.queryTimestamps(context, srcUri)
 
@@ -199,7 +207,7 @@ object GalleryCommit {
             dateModified = timestamps?.dateModified,
             dateAdded = timestamps?.dateAdded,
         )
-        when (kind) {
+        when (actualKind) {
             MediaKind.IMAGE -> {
                 val format = job.decision?.recipe?.imageOutFormat ?: "jpeg"
                 GalleryWriter.saveImage(

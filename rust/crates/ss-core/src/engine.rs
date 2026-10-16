@@ -1055,6 +1055,13 @@ impl CoreEngine {
                 let _ = self.on_platform_failed(image.job_id, reason, err.to_string());
             }
         }
+        let is_staged = image.input.contains("spaceslimmer/staging")
+            || image.input.contains("spaceslimmer\\staging")
+            || image.input.contains("spaceslimmer/import")
+            || image.input.contains("spaceslimmer\\import");
+        if is_staged {
+            let _ = std::fs::remove_file(&image.input);
+        }
     }
 }
 

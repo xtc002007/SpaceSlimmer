@@ -6,7 +6,7 @@ use image::codecs::jpeg::JpegEncoder;
 use image::codecs::png::PngEncoder;
 use image::codecs::webp::WebPEncoder;
 use image::imageops::FilterType;
-use image::{ColorType, DynamicImage, ImageEncoder, ImageReader, Limits};
+use image::{ColorType, DynamicImage, ImageEncoder, ImageReader};
 use ss_domain::Recipe;
 
 use crate::error::ImageError;
@@ -84,7 +84,18 @@ pub fn compress_image(
             encode_jpeg(&img, output, options.quality)?;
             crate::exif::copy_exif_metadata(input, output, options.keep_gps)?;
         }
-        "webp" => encode_webp(&img, output, options.quality)?,
+        "webp" => {
+            encode_webp(&img, output, options.quality)?;
+            let has_alpha = img.color().has_alpha();
+            let _ = crate::exif::copy_exif_to_webp(
+                input,
+                output,
+                img.width(),
+                img.height(),
+                has_alpha,
+                options.keep_gps,
+            );
+        }
         "png" => encode_png(&img, output)?,
         other => return Err(ImageError::UnsupportedFormat(other.to_string())),
     }
@@ -98,44 +109,16 @@ pub fn compress_image(
     })
 }
 
-/// Reads header dimensions first, then decodes with [`Limits`] capped to the fitted
-/// `max_side` target so JPEG decoders can downscale before allocating a full raster.
-fn decode_with_max_side(bytes: &[u8], max_side: Option<u32>) -> Result<DynamicImage, ImageError> {
-    let (src_w, src_h) = {
-        let reader = ImageReader::new(Cursor::new(bytes))
-            .with_guessed_format()
-            .map_err(|e| ImageError::Decode(e.to_string()))?;
-        reader
-            .into_dimensions()
-            .map_err(|e| ImageError::Decode(e.to_string()))?
-    };
-
-    let (target_w, target_h) = fit_max_side(src_w, src_h, max_side);
-
-    let needs_shrink = src_w > target_w || src_h > target_h;
+fn decode_with_max_side(bytes: &[u8], _max_side: Option<u32>) -> Result<DynamicImage, ImageError> {
     let mut reader = ImageReader::new(Cursor::new(bytes))
         .with_guessed_format()
         .map_err(|e| ImageError::Decode(e.to_string()))?;
-    if max_side.is_some() {
-        let mut limits = Limits::default();
-        limits.max_image_width = Some(target_w);
-        limits.max_image_height = Some(target_h);
-        limits.max_alloc = None;
-        reader.limits(limits);
-    }
-    match reader.decode() {
-        Ok(img) => Ok(img),
-        Err(_) if needs_shrink => {
-            let mut fallback = ImageReader::new(Cursor::new(bytes))
-                .with_guessed_format()
-                .map_err(|e| ImageError::Decode(e.to_string()))?;
-            fallback.no_limits();
-            fallback
-                .decode()
-                .map_err(|e| ImageError::Decode(e.to_string()))
-        }
-        Err(e) => Err(ImageError::Decode(e.to_string())),
-    }
+    let mut limits = image::Limits::default();
+    limits.max_alloc = Some(256 * 1024 * 1024); // 256 MB max buffer limit to prevent OS OOM kill
+    limits.max_image_width = Some(16384);
+    limits.max_image_height = Some(16384);
+    reader.limits(limits);
+    reader.decode().map_err(|e| ImageError::Decode(e.to_string()))
 }
 
 fn fit_max_side(width: u32, height: u32, max_side: Option<u32>) -> (u32, u32) {

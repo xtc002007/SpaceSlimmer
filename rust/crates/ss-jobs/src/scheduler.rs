@@ -325,6 +325,7 @@ impl JobScheduler {
         let group_state = if start_paused {
             GroupState::Paused
         } else {
+            self.disk_full_halt = false;
             GroupState::Active
         };
 
@@ -564,6 +565,7 @@ impl JobScheduler {
     }
 
     pub fn retry_job(&mut self, job_id: &str) -> Result<JobView, JobError> {
+        self.disk_full_halt = false;
         let row = self.store.get_job(job_id).map_err(JobError::from)?;
         let group_id = row.group_id.clone();
         let mut record = self.row_to_record(&row)?;

@@ -14,6 +14,9 @@ import java.nio.ByteBuffer
  */
 object AacTranscoder {
     private const val MAX_DURATION_MS = 30L * 60 * 1000
+    private val SUPPORTED_AAC_SAMPLE_RATES = listOf(
+        96000, 88200, 64000, 48000, 44100, 32000, 24000, 22050, 16000, 12000, 11025, 8000, 7350,
+    )
 
     fun transcode(
         inputPath: String,
@@ -53,6 +56,13 @@ object AacTranscoder {
             ?: error("missing input mime")
 
         val sampleRate = inputFormat.getInteger(MediaFormat.KEY_SAMPLE_RATE)
+        val targetSampleRate = if (SUPPORTED_AAC_SAMPLE_RATES.contains(sampleRate)) {
+            sampleRate
+        } else if (sampleRate > 48000) {
+            if (sampleRate % 44100 == 0) 44100 else 48000
+        } else {
+            SUPPORTED_AAC_SAMPLE_RATES.minByOrNull { kotlin.math.abs(it - sampleRate) } ?: 44100
+        }
         val mediaDurationMs = if (inputFormat.containsKey(MediaFormat.KEY_DURATION)) {
             inputFormat.getLong(MediaFormat.KEY_DURATION) / 1000
         } else {
@@ -70,25 +80,35 @@ object AacTranscoder {
         val outChannels = targetChannels.coerceIn(1, inputChannels)
         val outFormat = MediaFormat.createAudioFormat(
             MediaFormat.MIMETYPE_AUDIO_AAC,
-            sampleRate,
+            targetSampleRate,
             outChannels,
         ).apply {
             setInteger(MediaFormat.KEY_BIT_RATE, bitrateBps)
             setInteger(MediaFormat.KEY_AAC_PROFILE, MediaCodecInfo.CodecProfileLevel.AACObjectLC)
         }
 
-        val decoder = MediaCodec.createDecoderByType(inputMime)
-        decoder.configure(inputFormat, null, null, 0)
-        decoder.start()
-
-        val encoder = MediaCodec.createEncoderByType(MediaFormat.MIMETYPE_AUDIO_AAC)
-        encoder.configure(outFormat, null, null, MediaCodec.CONFIGURE_FLAG_ENCODE)
-        encoder.start()
-
-        File(outputPath).parentFile?.mkdirs()
-        val muxer = MediaMuxer(outputPath, MediaMuxer.OutputFormat.MUXER_OUTPUT_MPEG_4)
-        var muxerTrack = -1
+        var cleanupDecoder: MediaCodec? = null
+        var cleanupEncoder: MediaCodec? = null
+        var cleanupMuxer: MediaMuxer? = null
         var muxerStarted = false
+
+        try {
+            val decoder = MediaCodec.createDecoderByType(inputMime).apply {
+                configure(inputFormat, null, null, 0)
+                start()
+            }
+            cleanupDecoder = decoder
+
+            val encoder = MediaCodec.createEncoderByType(MediaFormat.MIMETYPE_AUDIO_AAC).apply {
+                configure(outFormat, null, null, MediaCodec.CONFIGURE_FLAG_ENCODE)
+                start()
+            }
+            cleanupEncoder = encoder
+
+            File(outputPath).parentFile?.mkdirs()
+            val muxer = MediaMuxer(outputPath, MediaMuxer.OutputFormat.MUXER_OUTPUT_MPEG_4)
+            cleanupMuxer = muxer
+            var muxerTrack = -1
 
         val decodeInfo = MediaCodec.BufferInfo()
         val encodeInfo = MediaCodec.BufferInfo()
@@ -137,50 +157,97 @@ object AacTranscoder {
 
         fun feedEncoderFromPcm(decodeOutIndex: Int, info: MediaCodec.BufferInfo) {
             val pcm = decoder.getOutputBuffer(decodeOutIndex) ?: return
+            pcm.order(java.nio.ByteOrder.LITTLE_ENDIAN)
             var offset = info.offset
             var remaining = info.size
             val ptsBase = (info.presentationTimeUs - trimStartUs).coerceAtLeast(0L)
             val mono = outChannels == 1 && inputChannels > 1
             var writtenFrames = 0L
 
-            while (remaining > 0) {
-                var inIndex = encoder.dequeueInputBuffer(0L)
-                if (inIndex < 0) {
-                    drainEncoderOutput()
-                    inIndex = encoder.dequeueInputBuffer(1000L)
+            if (sampleRate == targetSampleRate) {
+                while (remaining > 0) {
+                    var inIndex = encoder.dequeueInputBuffer(0L)
                     if (inIndex < 0) {
                         drainEncoderOutput()
-                        continue
+                        inIndex = encoder.dequeueInputBuffer(1000L)
+                        if (inIndex < 0) {
+                            drainEncoderOutput()
+                            continue
+                        }
+                    }
+                    val inBuf = encoder.getInputBuffer(inIndex) ?: break
+                    inBuf.order(java.nio.ByteOrder.LITTLE_ENDIAN)
+                    inBuf.clear()
+                    val capacity = inBuf.remaining()
+                    if (mono) {
+                        val maxFrames = remaining / (2 * inputChannels)
+                        val framesToWrite = minOf(maxFrames, capacity / 2)
+                        if (framesToWrite <= 0) break
+                        val bytesToWrite = framesToWrite * 2
+                        downmixToMono(pcm, offset, bytesToWrite, inputChannels, inBuf)
+                        val framePts = ptsBase + (writtenFrames * 1_000_000L) / targetSampleRate
+                        encoder.queueInputBuffer(inIndex, 0, bytesToWrite, framePts, 0)
+                        offset += framesToWrite * 2 * inputChannels
+                        remaining -= framesToWrite * 2 * inputChannels
+                        writtenFrames += framesToWrite
+                    } else {
+                        val frameBytes = 2 * outChannels
+                        val maxFrames = remaining / frameBytes
+                        val framesToWrite = minOf(maxFrames, capacity / frameBytes)
+                        if (framesToWrite <= 0) break
+                        val toCopy = framesToWrite * frameBytes
+                        pcm.position(offset)
+                        pcm.limit(offset + toCopy)
+                        inBuf.put(pcm)
+                        val framePts = ptsBase + (writtenFrames * 1_000_000L) / targetSampleRate
+                        encoder.queueInputBuffer(inIndex, 0, toCopy, framePts, 0)
+                        offset += toCopy
+                        remaining -= toCopy
+                        writtenFrames += framesToWrite
                     }
                 }
-                val inBuf = encoder.getInputBuffer(inIndex) ?: break
-                inBuf.clear()
-                val capacity = inBuf.remaining()
-                if (mono) {
-                    val maxFrames = remaining / (2 * inputChannels)
-                    val framesToWrite = minOf(maxFrames, capacity / 2)
-                    if (framesToWrite <= 0) break
-                    val bytesToWrite = framesToWrite * 2
-                    downmixToMono(pcm, offset, bytesToWrite, inputChannels, inBuf)
-                    val framePts = ptsBase + (writtenFrames * 1_000_000L) / sampleRate
-                    encoder.queueInputBuffer(inIndex, 0, bytesToWrite, framePts, 0)
-                    offset += framesToWrite * 2 * inputChannels
-                    remaining -= framesToWrite * 2 * inputChannels
-                    writtenFrames += framesToWrite
-                } else {
-                    val frameBytes = 2 * outChannels
-                    val maxFrames = remaining / frameBytes
-                    val framesToWrite = minOf(maxFrames, capacity / frameBytes)
-                    if (framesToWrite <= 0) break
-                    val toCopy = framesToWrite * frameBytes
-                    pcm.position(offset)
-                    pcm.limit(offset + toCopy)
-                    inBuf.put(pcm)
-                    val framePts = ptsBase + (writtenFrames * 1_000_000L) / sampleRate
-                    encoder.queueInputBuffer(inIndex, 0, toCopy, framePts, 0)
-                    offset += toCopy
-                    remaining -= toCopy
-                    writtenFrames += framesToWrite
+            } else {
+                // Linear resampling from sampleRate -> targetSampleRate
+                val inFrameBytes = 2 * inputChannels
+                val totalInFrames = remaining / inFrameBytes
+                val ratio = targetSampleRate.toDouble() / sampleRate.toDouble()
+                var inFrameOffset = 0
+
+                while (inFrameOffset < totalInFrames) {
+                    var inIndex = encoder.dequeueInputBuffer(0L)
+                    if (inIndex < 0) {
+                        drainEncoderOutput()
+                        inIndex = encoder.dequeueInputBuffer(1000L)
+                        if (inIndex < 0) {
+                            drainEncoderOutput()
+                            continue
+                        }
+                    }
+                    val inBuf = encoder.getInputBuffer(inIndex) ?: break
+                    inBuf.order(java.nio.ByteOrder.LITTLE_ENDIAN)
+                    inBuf.clear()
+                    val outFrameCapacity = inBuf.remaining() / (2 * outChannels)
+                    val remainingInFrames = totalInFrames - inFrameOffset
+                    val maxOutFrames = (remainingInFrames * ratio).toInt().coerceAtMost(outFrameCapacity)
+                    if (maxOutFrames <= 0) break
+
+                    val outBytes = resampleChunk(
+                        pcm = pcm,
+                        baseByteOffset = offset + inFrameOffset * inFrameBytes,
+                        availableInFrames = remainingInFrames,
+                        inChannels = inputChannels,
+                        outChannels = outChannels,
+                        ratio = ratio,
+                        outFrames = maxOutFrames,
+                        mono = mono,
+                        outBuf = inBuf,
+                    )
+
+                    val framePts = ptsBase + (writtenFrames * 1_000_000L) / targetSampleRate
+                    encoder.queueInputBuffer(inIndex, 0, outBytes, framePts, 0)
+                    writtenFrames += maxOutFrames
+                    val consumedInFrames = (maxOutFrames / ratio).toInt().coerceAtMost(remainingInFrames)
+                    inFrameOffset += consumedInFrames
                 }
             }
         }
@@ -205,103 +272,147 @@ object AacTranscoder {
 
         var lastProgressReportMs = 0L
         while (!encoderEos) {
-            if (isCancelled()) {
-                cleanup(decoder, encoder, extractor, muxer, muxerStarted)
-                error("cancelled")
-            }
-            if (System.currentTimeMillis() - startedAt > maxWallMs) {
-                cleanup(decoder, encoder, extractor, muxer, muxerStarted)
-                error("fail.timeout")
-            }
+                if (isCancelled()) {
+                    error("cancelled")
+                }
+                if (System.currentTimeMillis() - startedAt > maxWallMs) {
+                    error("fail.timeout")
+                }
 
-            var didWork = false
+                var didWork = false
 
-            // 1. Feed extractor into decoder
-            if (!inputDone) {
-                val inIndex = decoder.dequeueInputBuffer(0L)
-                if (inIndex >= 0) {
-                    val buffer = decoder.getInputBuffer(inIndex)
-                    if (buffer != null) {
-                        val sampleSize = extractor.readSampleData(buffer, 0)
-                        if (sampleSize < 0) {
-                            decoder.queueInputBuffer(
-                                inIndex, 0, 0, 0,
-                                MediaCodec.BUFFER_FLAG_END_OF_STREAM,
-                            )
-                            inputDone = true
-                        } else {
-                            val sampleTime = extractor.sampleTime
-                            if (sampleTime < trimStartUs) {
-                                decoder.queueInputBuffer(inIndex, 0, 0, 0, 0)
-                                extractor.advance()
-                            } else if (trimEndUs != null && sampleTime > trimEndUs) {
+                // 1. Feed extractor into decoder
+                if (!inputDone) {
+                    val inIndex = decoder.dequeueInputBuffer(0L)
+                    if (inIndex >= 0) {
+                        val buffer = decoder.getInputBuffer(inIndex)
+                        if (buffer != null) {
+                            val sampleSize = extractor.readSampleData(buffer, 0)
+                            if (sampleSize < 0) {
                                 decoder.queueInputBuffer(
                                     inIndex, 0, 0, 0,
                                     MediaCodec.BUFFER_FLAG_END_OF_STREAM,
                                 )
                                 inputDone = true
                             } else {
-                                decoder.queueInputBuffer(
-                                    inIndex, 0, sampleSize,
-                                    sampleTime, 0,
-                                )
-                                extractor.advance()
-                                if (totalDurationUs > 0) {
-                                    val now = System.currentTimeMillis()
-                                    if (now - lastProgressReportMs > 150) {
-                                        lastProgressReportMs = now
-                                        val progress = ((sampleTime - trimStartUs).toFloat() / totalDurationUs).coerceIn(0f, 0.99f)
-                                        onProgress(progress)
+                                val sampleTime = extractor.sampleTime
+                                if (sampleTime < trimStartUs) {
+                                    decoder.queueInputBuffer(inIndex, 0, 0, 0, 0)
+                                    extractor.advance()
+                                } else if (trimEndUs != null && sampleTime > trimEndUs) {
+                                    decoder.queueInputBuffer(
+                                        inIndex, 0, 0, 0,
+                                        MediaCodec.BUFFER_FLAG_END_OF_STREAM,
+                                    )
+                                    inputDone = true
+                                } else {
+                                    decoder.queueInputBuffer(
+                                        inIndex, 0, sampleSize,
+                                        sampleTime, 0,
+                                    )
+                                    extractor.advance()
+                                    if (totalDurationUs > 0) {
+                                        val now = System.currentTimeMillis()
+                                        if (now - lastProgressReportMs > 150) {
+                                            lastProgressReportMs = now
+                                            val progress = ((sampleTime - trimStartUs).toFloat() / totalDurationUs).coerceIn(0f, 0.99f)
+                                            onProgress(progress)
+                                        }
                                     }
                                 }
                             }
+                            didWork = true
                         }
-                        didWork = true
+                    }
+                }
+
+                // 2. Drain decoder into encoder
+                while (!decoderEos) {
+                    val decodeOut = decoder.dequeueOutputBuffer(decodeInfo, 0L)
+                    if (decodeOut < 0) break
+                    didWork = true
+                    if (decodeInfo.size > 0) {
+                        feedEncoderFromPcm(decodeOut, decodeInfo)
+                    }
+                    decoder.releaseOutputBuffer(decodeOut, false)
+                    if (decodeInfo.flags and MediaCodec.BUFFER_FLAG_END_OF_STREAM != 0) {
+                        decoderEos = true
+                        signalEncoderEos()
+                        break
+                    }
+                }
+
+                // 3. Drain encoder into muxer
+                if (drainEncoderOutput()) {
+                    didWork = true
+                }
+
+                // If nothing in the entire pipeline processed any bytes in this round, yield slightly
+                if (!didWork && !encoderEos) {
+                    try {
+                        Thread.sleep(1)
+                    } catch (_: InterruptedException) {
+                        // ignore
                     }
                 }
             }
 
-            // 2. Drain decoder into encoder
-            while (!decoderEos) {
-                val decodeOut = decoder.dequeueOutputBuffer(decodeInfo, 0L)
-                if (decodeOut < 0) break
-                didWork = true
-                if (decodeInfo.size > 0) {
-                    feedEncoderFromPcm(decodeOut, decodeInfo)
-                }
-                decoder.releaseOutputBuffer(decodeOut, false)
-                if (decodeInfo.flags and MediaCodec.BUFFER_FLAG_END_OF_STREAM != 0) {
-                    decoderEos = true
-                    signalEncoderEos()
-                    break
-                }
-            }
+            onProgress(1.0f)
+            return File(outputPath).length()
+        } finally {
+            cleanup(cleanupDecoder, cleanupEncoder, extractor, cleanupMuxer, muxerStarted)
+        }
+    }
 
-            // 3. Drain encoder into muxer
-            if (drainEncoderOutput()) {
-                didWork = true
-            }
+    private fun resampleChunk(
+        pcm: ByteBuffer,
+        baseByteOffset: Int,
+        availableInFrames: Int,
+        inChannels: Int,
+        outChannels: Int,
+        ratio: Double,
+        outFrames: Int,
+        mono: Boolean,
+        outBuf: ByteBuffer,
+    ): Int {
+        pcm.order(java.nio.ByteOrder.LITTLE_ENDIAN)
+        outBuf.order(java.nio.ByteOrder.LITTLE_ENDIAN)
+        val inFrameBytes = 2 * inChannels
+        var writtenBytes = 0
+        for (o in 0 until outFrames) {
+            val inPos = o / ratio
+            val idx0 = inPos.toInt().coerceAtMost(availableInFrames - 1)
+            val idx1 = (idx0 + 1).coerceAtMost(availableInFrames - 1)
+            val frac = (inPos - idx0).toFloat().coerceIn(0f, 1f)
 
-            // If nothing in the entire pipeline processed any bytes in this round, yield slightly
-            if (!didWork && !encoderEos) {
-                try {
-                    Thread.sleep(1)
-                } catch (_: InterruptedException) {
-                    // ignore
+            if (mono) {
+                var s0Sum = 0
+                var s1Sum = 0
+                val bytePos0 = baseByteOffset + idx0 * inFrameBytes
+                val bytePos1 = baseByteOffset + idx1 * inFrameBytes
+                for (ch in 0 until inChannels) {
+                    s0Sum += pcm.getShort(bytePos0 + ch * 2).toInt()
+                    s1Sum += pcm.getShort(bytePos1 + ch * 2).toInt()
+                }
+                val s0 = s0Sum / inChannels
+                val s1 = s1Sum / inChannels
+                val interpolated = (s0 * (1f - frac) + s1 * frac).toInt().coerceIn(-32768, 32767).toShort()
+                outBuf.putShort(interpolated)
+                writtenBytes += 2
+            } else {
+                val bytePos0 = baseByteOffset + idx0 * inFrameBytes
+                val bytePos1 = baseByteOffset + idx1 * inFrameBytes
+                for (ch in 0 until outChannels) {
+                    val inCh = ch.coerceAtMost(inChannels - 1)
+                    val s0 = pcm.getShort(bytePos0 + inCh * 2).toInt()
+                    val s1 = pcm.getShort(bytePos1 + inCh * 2).toInt()
+                    val interpolated = (s0 * (1f - frac) + s1 * frac).toInt().coerceIn(-32768, 32767).toShort()
+                    outBuf.putShort(interpolated)
+                    writtenBytes += 2
                 }
             }
         }
-
-        onProgress(1.0f)
-
-        decoder.stop()
-        decoder.release()
-        encoder.stop()
-        encoder.release()
-        extractor.release()
-        if (muxerStarted) muxer.stop()
-        muxer.release()
-        return File(outputPath).length()
+        return writtenBytes
     }
 
     private fun downmixToMono(
@@ -311,6 +422,8 @@ object AacTranscoder {
         inputChannels: Int,
         out: ByteBuffer,
     ) {
+        pcm.order(java.nio.ByteOrder.LITTLE_ENDIAN)
+        out.order(java.nio.ByteOrder.LITTLE_ENDIAN)
         val frames = outBytes / 2
         pcm.position(offset)
         for (i in 0 until frames) {
@@ -324,18 +437,18 @@ object AacTranscoder {
     }
 
     private fun cleanup(
-        decoder: MediaCodec,
-        encoder: MediaCodec,
-        extractor: MediaExtractor,
-        muxer: MediaMuxer,
+        decoder: MediaCodec?,
+        encoder: MediaCodec?,
+        extractor: MediaExtractor?,
+        muxer: MediaMuxer?,
         muxerStarted: Boolean,
     ) {
-        runCatching { decoder.stop() }
-        runCatching { decoder.release() }
-        runCatching { encoder.stop() }
-        runCatching { encoder.release() }
-        runCatching { extractor.release() }
-        if (muxerStarted) runCatching { muxer.stop() }
-        runCatching { muxer.release() }
+        runCatching { decoder?.stop() }
+        runCatching { decoder?.release() }
+        runCatching { encoder?.stop() }
+        runCatching { encoder?.release() }
+        runCatching { extractor?.release() }
+        if (muxerStarted) runCatching { muxer?.stop() }
+        runCatching { muxer?.release() }
     }
 }

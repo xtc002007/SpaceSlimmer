@@ -74,14 +74,14 @@ class MediaCompressViewModel(app: Application) : AndroidViewModel(app) {
 
     suspend fun importUris(uris: List<Uri>, kind: MediaKind): Result<Unit> = withContext(Dispatchers.IO) {
         runCatching {
-            val importDir = java.io.File(
-                getApplication<Application>().filesDir,
-                "spaceslimmer/import",
-            )
             val appContext = getApplication<Application>()
-            selectedMedia = uris.map { uri ->
+            selectedMedia = uris.mapNotNull { uri ->
                 val resolvedUri = com.spaceslimmer.core.GalleryWriter.resolveReplaceUri(appContext, uri, kind) ?: uri
-                MediaProbe.probeAndImportMedia(appContext, resolvedUri, importDir, kind)
+                val directPath = if (resolvedUri.scheme == "file") resolvedUri.path else null
+                val readablePath = if (directPath != null && java.io.File(directPath).canRead()) directPath else ""
+                com.spaceslimmer.core.MediaProbe.probeRemote(appContext, resolvedUri, kind)?.let { probed ->
+                    probed.copy(localPath = if (probed.localPath.isNotBlank()) probed.localPath else readablePath)
+                }
             }
         }
     }
@@ -120,12 +120,33 @@ class MediaCompressViewModel(app: Application) : AndroidViewModel(app) {
     ): Result<String> = withContext(Dispatchers.IO) {
         runCatching {
             val core = engine ?: error("CoreEngine unavailable")
+            val appContext = getApplication<Application>()
+            val stagingDir = java.io.File(appContext.cacheDir, "spaceslimmer/staging").apply { mkdirs() }
             val jobs = selectedMedia.map { item ->
+                var localPath = item.localPath
+                if (item.kind == MediaKind.IMAGE && localPath.isBlank()) {
+                    val srcUri = Uri.parse(item.uri)
+                    val directPath = if (srcUri.scheme == "file") srcUri.path else null
+                    if (directPath != null && java.io.File(directPath).canRead()) {
+                        localPath = directPath
+                    } else {
+                        val ext = when {
+                            item.mime.contains("png", true) -> "png"
+                            item.mime.contains("webp", true) -> "webp"
+                            else -> "jpg"
+                        }
+                        val stagedFile = java.io.File(stagingDir, "${UUID.randomUUID()}.$ext")
+                        appContext.contentResolver.openInputStream(srcUri)?.use { input ->
+                            stagedFile.outputStream().use { output -> input.copyTo(output) }
+                        }
+                        localPath = stagedFile.absolutePath
+                    }
+                }
                 JobSpec(
                     id = UUID.randomUUID().toString(),
                     displayName = item.displayName,
                     sourceUri = item.uri,
-                    localPath = item.localPath,
+                    localPath = localPath.takeIf { it.isNotBlank() },
                     fingerprint = MediaProbe.toFingerprint(item),
                     requestOverride = null,
                 )
@@ -195,6 +216,7 @@ class MediaCompressViewModel(app: Application) : AndroidViewModel(app) {
                 .forEach { job ->
                     CompressSession.bridge(getApplication())?.cancelPlatformJob(job.spec.id)
                 }
+            com.spaceslimmer.app.service.CompressForegroundService.stop(getApplication())
             latestGroup = group
         }
     }

@@ -1,4 +1,4 @@
-﻿//! Video compression decision logic.
+//! Video compression decision logic.
 
 
 
@@ -117,6 +117,20 @@ fn decide_video_target_size(
             SkipReason::TargetSizeUnreachable,
 
             TimeClass::Medium,
+
+        );
+
+    }
+
+    if fp.file_bytes <= target_bytes {
+
+        return skip_decision(
+
+            fp.file_bytes,
+
+            SkipReason::TooSmall,
+
+            TimeClass::Fast,
 
         );
 

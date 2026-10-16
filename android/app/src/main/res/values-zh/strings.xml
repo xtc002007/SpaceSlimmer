@@ -47,6 +47,10 @@
     <string name="media_total_saved">合计节省 %1$s</string>
     <string name="media_save_gallery">另存到相册</string>
     <string name="media_saved_to_gallery">已保存 %1$d 个到相册「空间瘦身」</string>
+    <string name="audio_save_library">保存到音乐库</string>
+    <string name="audio_saved_to_library">已保存 %1$d 个音频到音乐库</string>
+    <string name="audio_replace_library">替换原音频文件</string>
+    <string name="audio_replaced_count">已替换 %1$d 个音频</string>
     <string name="preset_image_max">最高</string>
     <string name="preset_image_high">高清</string>
     <string name="preset_image_small">小体积</string>
@@ -99,6 +103,7 @@
     <string name="notify_title">空间瘦身</string>
     <string name="notify_idle">等待任务</string>
     <string name="notify_progress">%1$d/%2$d 完成，已省 %3$s</string>
+    <string name="notify_complete">压缩完成：完成 %1$d/%2$d，已省 %3$s</string>
     <string name="estimate_summary">预计压缩 %1$d 项，输出约 %2$s–%3$s</string>
     <string name="estimate_skip_count">%1$d 项将跳过</string>
     <string name="compat_title">兼容档位</string>
@@ -196,6 +201,7 @@
     <string name="preset_video_target_size">指定体积</string>
     <string name="preset_video_custom">自定义</string>
     <string name="target_size_mb">目标体积（MB）</string>
+    <string name="target_size_per_video_hint">适用于单视频体积上限。本身已小于该大小的视频将自动保持原样跳过。</string>
     <string name="resolution_label">分辨率上限</string>
     <string name="resolution_keep">保持</string>
     <string name="compat_more_efficient">更高效</string>

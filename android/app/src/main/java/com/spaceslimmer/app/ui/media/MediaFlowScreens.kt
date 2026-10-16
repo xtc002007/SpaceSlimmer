@@ -86,8 +86,8 @@ fun MediaJobsScreen(
             savedMsg = it
             saving = false
         },
-        savedCountRes = R.string.media_saved_to_gallery,
-        replacedCountRes = R.string.media_replaced_count,
+        savedCountRes = if (kind == MediaKind.AUDIO) R.string.audio_saved_to_library else R.string.media_saved_to_gallery,
+        replacedCountRes = if (kind == MediaKind.AUDIO) R.string.audio_replaced_count else R.string.media_replaced_count,
         kind = kind,
     )
     val saveAsNewToGallery = rememberGallerySaveHandler(
@@ -97,8 +97,8 @@ fun MediaJobsScreen(
             savedMsg = it
             saving = false
         },
-        savedCountRes = R.string.media_saved_to_gallery,
-        replacedCountRes = R.string.media_replaced_count,
+        savedCountRes = if (kind == MediaKind.AUDIO) R.string.audio_saved_to_library else R.string.media_saved_to_gallery,
+        replacedCountRes = if (kind == MediaKind.AUDIO) R.string.audio_replaced_count else R.string.media_replaced_count,
         kind = kind,
     )
 
@@ -223,25 +223,34 @@ fun MediaJobsScreen(
                                     Text(savedMsg!!)
                                 }
                                 val isAllReplaced = g.jobs.all { it.state == JobState.COMMITTED_REPLACE }
-                                if (kind != MediaKind.AUDIO) {
-                                    SsPrimaryButton(
-                                        text = if (isAllReplaced) stringResource(R.string.vault_already_replaced)
-                                        else stringResource(R.string.media_replace_gallery),
-                                        onClick = {
-                                            saving = true
-                                            replaceToGallery()
-                                        },
-                                        enabled = !saving && !isAllReplaced,
-                                    )
-                                    SsSecondaryButton(
-                                        text = stringResource(R.string.media_save_gallery),
-                                        onClick = {
-                                            saving = true
-                                            saveAsNewToGallery()
-                                        },
-                                        enabled = !saving,
-                                    )
+                                val replaceLabel = if (isAllReplaced) {
+                                    stringResource(R.string.vault_already_replaced)
+                                } else if (kind == MediaKind.AUDIO) {
+                                    stringResource(R.string.audio_replace_library)
+                                } else {
+                                    stringResource(R.string.media_replace_gallery)
                                 }
+                                val saveLabel = if (kind == MediaKind.AUDIO) {
+                                    stringResource(R.string.audio_save_library)
+                                } else {
+                                    stringResource(R.string.media_save_gallery)
+                                }
+                                SsPrimaryButton(
+                                    text = replaceLabel,
+                                    onClick = {
+                                        saving = true
+                                        replaceToGallery()
+                                    },
+                                    enabled = !saving && !isAllReplaced,
+                                )
+                                SsSecondaryButton(
+                                    text = saveLabel,
+                                    onClick = {
+                                        saving = true
+                                        saveAsNewToGallery()
+                                    },
+                                    enabled = !saving,
+                                )
                                 val exportPaths = GalleryCommit.savableJobs(g).mapNotNull { it.outputUri }
                                 ExportToFolderButton(
                                     paths = exportPaths,

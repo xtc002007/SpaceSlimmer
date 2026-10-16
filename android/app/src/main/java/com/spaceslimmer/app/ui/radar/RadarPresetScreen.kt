@@ -300,6 +300,7 @@ fun RadarPresetScreen(
                                 value = targetSizeMb,
                                 onValueChange = { targetSizeMb = it.filter { ch -> ch.isDigit() } },
                                 label = { Text(stringResource(R.string.target_size_mb)) },
+                                supportingText = { Text(stringResource(R.string.target_size_per_video_hint)) },
                                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                                 shape = InputShape,
                                 modifier = Modifier.fillMaxWidth(),

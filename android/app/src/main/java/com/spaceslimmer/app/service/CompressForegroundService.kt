@@ -55,6 +55,19 @@ class CompressForegroundService : Service() {
                 Companion.starting = false
                 Companion.stopping = false
             }
+            ACTION_COMPLETE_STOP -> {
+                releaseWakeLock()
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+                    stopForeground(STOP_FOREGROUND_DETACH)
+                } else {
+                    @Suppress("DEPRECATION")
+                    stopForeground(false)
+                }
+                stopSelf()
+                Companion.running = false
+                Companion.starting = false
+                Companion.stopping = false
+            }
             else -> {
                 val incomingSession = intent?.getIntExtra(EXTRA_SESSION, -1) ?: -1
                 val text = Companion.pendingText ?: getString(R.string.notify_idle)
@@ -91,6 +104,7 @@ class CompressForegroundService : Service() {
         private const val CHANNEL_ID = "compress_jobs"
         private const val NOTIFICATION_ID = 42
         private const val ACTION_STOP = "stop"
+        private const val ACTION_COMPLETE_STOP = "complete_stop"
         private const val EXTRA_SESSION = "session"
         private var running = false
         private var starting = false
@@ -142,10 +156,40 @@ class CompressForegroundService : Service() {
             context.startService(intent)
         }
 
+        fun completeAndStop(context: Context, group: GroupView) {
+            runCatching {
+                ensureChannel(context)
+                val total = group.jobs.size
+                val done = group.done.toInt()
+                val text = context.getString(
+                    R.string.notify_complete,
+                    done,
+                    total,
+                    com.spaceslimmer.app.ui.shared.formatBytes(context, group.savedBytes),
+                )
+                val manager = context.getSystemService(NotificationManager::class.java)
+                manager.notify(NOTIFICATION_ID, buildCompletionNotification(context, text))
+
+                stopping = true
+                stopSession = session
+                val intent = Intent(context, CompressForegroundService::class.java).apply {
+                    action = ACTION_COMPLETE_STOP
+                }
+                context.startService(intent)
+            }.onFailure { err ->
+                com.spaceslimmer.core.AppLogger.e("CompressForegroundService", "completeAndStop error: ${err.message}", err)
+            }
+        }
+
         fun update(context: Context, group: GroupView) {
             runCatching {
                 val total = group.jobs.size
                 val done = (group.done + group.failed + group.skipped).toInt()
+                val isFinished = total > 0 && done >= total && group.running == 0u
+                if (isFinished) {
+                    completeAndStop(context, group)
+                    return
+                }
                 val ratio = if (total == 0) 0f else done.toFloat() / total
                 val text = context.getString(
                     R.string.notify_progress,
@@ -190,6 +234,23 @@ class CompressForegroundService : Service() {
                 .setProgress(100, (ratio * 100).toInt(), ratio <= 0f)
                 .setContentIntent(launch)
                 .setOngoing(ratio < 1f)
+                .build()
+        }
+
+        private fun buildCompletionNotification(context: Context, text: String): Notification {
+            val launch = PendingIntent.getActivity(
+                context,
+                0,
+                Intent(context, MainActivity::class.java),
+                PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT,
+            )
+            return NotificationCompat.Builder(context, CHANNEL_ID)
+                .setSmallIcon(android.R.drawable.ic_menu_upload)
+                .setContentTitle(context.getString(R.string.notify_title))
+                .setContentText(text)
+                .setContentIntent(launch)
+                .setOngoing(false)
+                .setAutoCancel(true)
                 .build()
         }
     }
