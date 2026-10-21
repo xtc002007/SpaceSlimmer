@@ -319,16 +319,18 @@ object MediaRadar {
 
     private fun sumCollectionBytes(context: Context, collection: Uri, sizeColumn: String): Long {
         var sum = 0L
-        context.contentResolver.query(
-            collection,
-            arrayOf(sizeColumn),
-            null,
-            null,
-            null,
-        )?.use { cursor ->
-            val sizeCol = cursor.getColumnIndexOrThrow(sizeColumn)
-            while (cursor.moveToNext()) {
-                sum += cursor.getLong(sizeCol).coerceAtLeast(0)
+        runCatching {
+            context.contentResolver.query(
+                collection,
+                arrayOf(sizeColumn),
+                null,
+                null,
+                null,
+            )?.use { cursor ->
+                val sizeCol = cursor.getColumnIndexOrThrow(sizeColumn)
+                while (cursor.moveToNext()) {
+                    sum += cursor.getLong(sizeCol).coerceAtLeast(0)
+                }
             }
         }
         return sum
@@ -453,7 +455,8 @@ object MediaRadar {
             putInt(ContentResolver.QUERY_ARG_OFFSET, offset)
         }
         val batch = mutableListOf<MediaEntry>()
-        context.contentResolver.query(collection, projection.toTypedArray(), queryArgs, null)?.use { cursor ->
+        runCatching {
+            context.contentResolver.query(collection, projection.toTypedArray(), queryArgs, null)?.use { cursor ->
             val idCol = cursor.getColumnIndexOrThrow(MediaStore.MediaColumns._ID)
             val sizeCol = cursor.getColumnIndexOrThrow(sizeColumn)
             val dateCol = cursor.getColumnIndexOrThrow(dateColumn)
@@ -478,6 +481,7 @@ object MediaRadar {
                     ),
                 )
             }
+        }
         }
         return batch
     }

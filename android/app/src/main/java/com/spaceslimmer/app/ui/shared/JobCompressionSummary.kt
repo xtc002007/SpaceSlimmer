@@ -1,9 +1,6 @@
 package com.spaceslimmer.app.ui.shared
 
-import android.Manifest
 import android.app.Activity
-import android.content.pm.PackageManager
-import android.os.Build
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.IntentSenderRequest
 import androidx.activity.result.contract.ActivityResultContracts
@@ -22,7 +19,6 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import androidx.core.content.ContextCompat
 import com.spaceslimmer.app.R
 import com.spaceslimmer.app.export.GallerySaveOutcome
 import com.spaceslimmer.app.ui.theme.savingsColor
@@ -200,35 +196,8 @@ fun rememberGallerySaveHandler(
         }
     }
 
-    val permissionLauncher = rememberLauncherForActivityResult(
-        ActivityResultContracts.RequestMultiplePermissions(),
-    ) { _ ->
-        executeSave()
-    }
-
     return {
-        if (replaceMode) {
-            val needed = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-                when (kind) {
-                    MediaKind.VIDEO -> listOf(Manifest.permission.READ_MEDIA_VIDEO)
-                    MediaKind.IMAGE -> listOf(Manifest.permission.READ_MEDIA_IMAGES)
-                    MediaKind.AUDIO -> listOf(Manifest.permission.READ_MEDIA_AUDIO)
-                }
-            } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-                listOf(Manifest.permission.READ_EXTERNAL_STORAGE)
-            } else {
-                emptyList()
-            }.filter {
-                ContextCompat.checkSelfPermission(context, it) != PackageManager.PERMISSION_GRANTED
-            }
-            if (needed.isNotEmpty()) {
-                permissionLauncher.launch(needed.toTypedArray())
-            } else {
-                executeSave()
-            }
-        } else {
-            executeSave()
-        }
+        executeSave()
     }
 }
 

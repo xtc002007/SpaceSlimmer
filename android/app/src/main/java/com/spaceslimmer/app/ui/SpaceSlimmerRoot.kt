@@ -409,7 +409,6 @@ fun HomeScreen(
     LaunchedEffect(engine, engineAvailable) {
         val core = engine ?: return@LaunchedEffect
         if (!engineAvailable) return@LaunchedEffect
-        onRequestMediaPermissions()
         radarScanning = true
         runCatching {
             val result = withContext(Dispatchers.IO) {
