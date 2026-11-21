@@ -31,6 +31,7 @@
 | [docs/07-phase1-signoff.md](docs/07-phase1-signoff.md) | 第一阶段签收报告（真机签字栏） |
 | [docs/08-wave-e-f-backlog.md](docs/08-wave-e-f-backlog.md) | Wave E/F backlog 与 Phase 1 边界 |
 | [docs/09-play-listing.md](docs/09-play-listing.md) | Play / 商店文案包（未提交） |
+| [docs/10-storage-analyzer.md](docs/10-storage-analyzer.md) | 存储全景与磁盘分析设计规范（借鉴 WinDirStat 闭环方案） |
 | [docs/smoke-checklist.md](docs/smoke-checklist.md) | 真机 smoke 清单 |
 | [docs/failure-injection.md](docs/failure-injection.md) | 失败注入（自动 + 手工） |
 

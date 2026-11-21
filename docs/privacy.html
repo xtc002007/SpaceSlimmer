@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Privacy Policy - SpaceSlimmer</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: #0B0F19;
+            color: #F1F5F9;
+            line-height: 1.7;
+            padding: 40px 24px;
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        h1 { font-size: 32px; margin-bottom: 8px; color: #38BDF8; }
+        .date { color: #94A3B8; font-size: 14px; margin-bottom: 32px; }
+        h2 { font-size: 20px; margin-top: 28px; margin-bottom: 12px; color: #60A5FA; }
+        p, li { color: #CBD5E1; margin-bottom: 14px; }
+        ul { padding-left: 24px; margin-bottom: 16px; }
+        a { color: #38BDF8; text-decoration: none; }
+        a:hover { text-decoration: underline; }
+        .highlight {
+            background: rgba(56, 189, 248, 0.1);
+            border-left: 4px solid #38BDF8;
+            padding: 16px;
+            border-radius: 4px;
+            margin: 20px 0;
+        }
+    </style>
+</head>
+<body>
+    <p><a href="index.html">&larr; Back to Home</a></p>
+    <h1 style="margin-top: 16px;">Privacy Policy</h1>
+    <div class="date">Effective Date: November 21, 2026 | Last Updated: November 21, 2026</div>
+
+    <div class="highlight">
+        <strong>Summary:</strong> SpaceSlimmer is an entirely on-device utility. We do not collect, transmit, store, sell, or share any personal data, media files, camera roll contents, or device identifiers. All video, photo, and audio processing occurs 100% locally on your device.
+    </div>
+
+    <h2>1. Overview and Core Commitment</h2>
+    <p>SpaceSlimmer ("we", "our", or "the App") is developed as a privacy-first Android application designed to help users compress videos, optimize photos, and analyze device storage. We believe that your personal memories, photos, and video recordings belong solely to you.</p>
+
+    <h2>2. Data We Do NOT Collect</h2>
+    <ul>
+        <li><strong>Media Files:</strong> Your videos, photos, and audio files are never uploaded to the cloud or transmitted over the network. All encoding and decoding operations utilize Android native GPU hardware acceleration directly on your device.</li>
+        <li><strong>Personal Identifiers:</strong> We do not require account registration, email addresses, phone numbers, or social media logins.</li>
+        <li><strong>Location Data:</strong> The App does not collect or track your GPS location. During compression, GPS metadata contained within original photo EXIF tags is preserved locally or stripped according to your in-app settings.</li>
+        <li><strong>Device &amp; Usage Analytics:</strong> We do not include third-party tracking SDKs, analytics SDKs (e.g. Firebase Analytics, Google Analytics), or advertising SDKs.</li>
+    </ul>
+
+    <h2>3. Android Permissions and Why They Are Needed</h2>
+    <p>The App requests only the strictly necessary system permissions required to perform local file operations:</p>
+    <ul>
+        <li><strong>Storage Access (READ_EXTERNAL_STORAGE, WRITE_EXTERNAL_STORAGE):</strong> Required on legacy Android versions exclusively to read the media files you select for compression and to save the resulting optimized files back to your device storage or gallery. On modern Android versions, standard system Photo Picker is used.</li>
+        <li><strong>Foreground Service (FOREGROUND_SERVICE, FOREGROUND_SERVICE_DATA_SYNC, WAKE_LOCK):</strong> Enables background batch processing so long video compression tasks complete reliably without interruption when the screen turns off.</li>
+        <li><strong>Notifications (POST_NOTIFICATIONS):</strong> Used solely to display local progress indicators during active compression tasks and notify you upon job completion.</li>
+    </ul>
+
+    <h2>4. Safe Vault Isolation &amp; File Retention</h2>
+    <p>When you choose the "Replace Original" output policy, the App creates a temporary local backup in an isolated app sandbox folder ("Safe Vault"). This backup enables you to undo compression and restore your original file within a user-customizable retention window (7 to 30 days). Vault backups reside exclusively in your local storage and are never uploaded.</p>
+
+    <h2>5. Third-Party Services and Network Requests</h2>
+    <p>The current production release of SpaceSlimmer operates entirely offline and requires zero network access (no INTERNET permission in the application manifest). In-app review requests are handled directly by Google Play Store system IPC and do not share any user data with the developer.</p>
+
+    <h2>6. Children's Privacy</h2>
+    <p>The App does not knowingly collect any information from children under the age of 13. Since no personal data is collected from any user, our services comply fully with COPPA and global privacy regulations.</p>
+
+    <h2>7. Changes to This Privacy Policy</h2>
+    <p>We may update this Privacy Policy from time to time. Any changes will be posted on this page with an updated revision date.</p>
+
+    <h2>8. Contact Us</h2>
+    <p>If you have any questions or feedback regarding this Privacy Policy, please contact us at:</p>
+    <p><strong>Email:</strong> support@spaceslimmer.com</p>
+    <p><strong>Developer:</strong> SpaceSlimmer Labs</p>
+</body>
+</html>
