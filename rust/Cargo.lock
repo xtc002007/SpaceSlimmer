@@ -990,6 +990,13 @@ dependencies = [
 ]
 
 [[package]]
+name = "ss-classify"
+version = "0.1.0"
+dependencies = [
+ "serde",
+]
+
+[[package]]
 name = "ss-core"
 version = "0.1.0"
 dependencies = [
@@ -997,11 +1004,16 @@ dependencies = [
  "serde",
  "serde_json",
  "ss-audio",
+ "ss-classify",
  "ss-domain",
+ "ss-dupe",
  "ss-image",
  "ss-jobs",
+ "ss-platform",
  "ss-probe",
+ "ss-scan",
  "ss-sqlite",
+ "ss-treemap",
  "thiserror",
  "uniffi",
  "uuid",
@@ -1011,6 +1023,14 @@ dependencies = [
 name = "ss-domain"
 version = "0.1.0"
 dependencies = [
+ "serde",
+]
+
+[[package]]
+name = "ss-dupe"
+version = "0.1.0"
+dependencies = [
+ "crc32fast",
  "serde",
 ]
 
@@ -1041,10 +1061,25 @@ dependencies = [
 [[package]]
 name = "ss-platform"
 version = "0.1.0"
+dependencies = [
+ "serde",
+]
 
 [[package]]
 name = "ss-probe"
 version = "0.1.0"
+
+[[package]]
+name = "ss-scan"
+version = "0.1.0"
+dependencies = [
+ "parking_lot",
+ "serde",
+ "serde_json",
+ "ss-classify",
+ "ss-platform",
+ "thiserror",
+]
 
 [[package]]
 name = "ss-sqlite"
@@ -1053,7 +1088,16 @@ dependencies = [
  "rusqlite",
  "serde",
  "serde_json",
+ "ss-classify",
+ "ss-scan",
  "thiserror",
+]
+
+[[package]]
+name = "ss-treemap"
+version = "0.1.0"
+dependencies = [
+ "serde",
 ]
 
 [[package]]

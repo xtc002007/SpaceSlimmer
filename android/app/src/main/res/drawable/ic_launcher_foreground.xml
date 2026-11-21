@@ -4,33 +4,31 @@
     android:height="108dp"
     android:viewportWidth="108"
     android:viewportHeight="108">
-    <!-- Outer radar circle -->
+    <!-- Subtle outer radar glow -->
     <path
-        android:strokeColor="#FF60A5FA"
-        android:strokeWidth="2.5"
-        android:strokeAlpha="0.7"
-        android:pathData="M54,24 A30,30 0 1,1 53.99,24"/>
-    <!-- Inner radar circle -->
-    <path
-        android:strokeColor="#FF93C5FD"
-        android:strokeWidth="2"
-        android:strokeAlpha="0.8"
-        android:pathData="M54,34 A20,20 0 1,1 53.99,34"/>
-    <!-- Central storage vault core -->
-    <path
-        android:fillColor="#FF38BDF8"
-        android:pathData="M44,44 h20 v20 h-20 z"/>
-    <!-- Compression Inward Arrows -->
+        android:strokeColor="#55FFFFFF"
+        android:strokeWidth="1.2"
+        android:pathData="M54,22 A32,32 0 1,1 53.99,22"/>
+    <!-- Central Pure White Squircle Card (Safe Zone 72dp) -->
     <path
         android:fillColor="#FFFFFFFF"
-        android:pathData="M32,54 l7,-6 v4 h6 v4 h-6 v4 z"/>
+        android:pathData="M43,36 h22 c3.5,0 6,2.5 6,6 v24 c0,3.5 -2.5,6 -6,6 h-22 c-3.5,0 -6,-2.5 -6,-6 v-24 c0,-3.5 2.5,-6 6,-6 z"/>
+    <!-- Vibrant Blue Play Media Triangle -->
     <path
-        android:fillColor="#FFFFFFFF"
-        android:pathData="M76,54 l-7,-6 v4 h-6 v4 h6 v4 z"/>
+        android:fillColor="#FF0284C7"
+        android:pathData="M51,46 L60,54 L51,62 Z"/>
+    <!-- Inward Compression Arrows: Left Arrow pointing Right -->
     <path
-        android:fillColor="#FFFFFFFF"
-        android:pathData="M54,32 l-6,7 h4 v6 h4 v-6 h4 z"/>
+        android:strokeColor="#FFFFFFFF"
+        android:strokeWidth="2.4"
+        android:strokeLineCap="round"
+        android:strokeLineJoin="round"
+        android:pathData="M23,54 L32,54 M28,50 L32,54 L28,58"/>
+    <!-- Inward Compression Arrows: Right Arrow pointing Left -->
     <path
-        android:fillColor="#FFFFFFFF"
-        android:pathData="M54,76 l-6,-7 h4 v-6 h4 v6 h4 z"/>
+        android:strokeColor="#FFFFFFFF"
+        android:strokeWidth="2.4"
+        android:strokeLineCap="round"
+        android:strokeLineJoin="round"
+        android:pathData="M85,54 L76,54 M80,50 L76,54 L80,58"/>
 </vector>

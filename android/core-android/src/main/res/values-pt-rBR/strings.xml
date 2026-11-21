@@ -21,4 +21,6 @@
     <string name="fail_cancelled">Cancelado</string>
     <string name="fail_platform">Falha no codificador do sistema</string>
     <string name="fail_unknown">Erro desconhecido</string>
+    <string name="vault_original_file">Arquivo original da galeria (ID: %1$s)</string>
+    <string name="vault_original_path">Localização original na galeria</string>
 </resources>

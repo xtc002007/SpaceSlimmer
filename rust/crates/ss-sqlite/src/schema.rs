@@ -3,7 +3,7 @@ use rusqlite::Connection;
 use crate::error::DbError;
 
 /// Current schema version written to `schema_migrations`.
-pub const SCHEMA_VERSION: u32 = 4;
+pub const SCHEMA_VERSION: u32 = 5;
 
 const MIGRATION_V1: &str = r"
 CREATE TABLE IF NOT EXISTS groups (
@@ -100,6 +100,14 @@ pub fn migrate(conn: &Connection) -> Result<(), DbError> {
         )?;
     }
 
+    if current < 5 {
+        conn.execute_batch(MIGRATION_V5)?;
+        conn.execute(
+            "INSERT OR REPLACE INTO schema_migrations(version) VALUES (5)",
+            [],
+        )?;
+    }
+
     Ok(())
 }
 
@@ -123,6 +131,34 @@ CREATE INDEX IF NOT EXISTS idx_events_ts ON events(ts);
 
 const MIGRATION_V4: &str = r"
 ALTER TABLE vault ADD COLUMN compressed_uri TEXT;
+";
+
+const MIGRATION_V5: &str = r"
+CREATE TABLE IF NOT EXISTS scans (
+    id TEXT PRIMARY KEY NOT NULL,
+    created_at INTEGER NOT NULL,
+    scope_json TEXT NOT NULL,
+    source_level TEXT NOT NULL,
+    root_path TEXT NOT NULL,
+    total_bytes INTEGER NOT NULL,
+    used_bytes INTEGER NOT NULL,
+    free_bytes INTEGER NOT NULL,
+    scanned_bytes INTEGER NOT NULL,
+    file_count INTEGER NOT NULL,
+    duration_ms INTEGER NOT NULL,
+    tree_blob TEXT NOT NULL
+);
+
+CREATE INDEX IF NOT EXISTS idx_scans_created_at ON scans(created_at);
+
+CREATE TABLE IF NOT EXISTS scan_category_stats (
+    scan_id TEXT NOT NULL,
+    category INTEGER NOT NULL,
+    bytes INTEGER NOT NULL,
+    file_count INTEGER NOT NULL,
+    PRIMARY KEY (scan_id, category),
+    FOREIGN KEY (scan_id) REFERENCES scans(id) ON DELETE CASCADE
+);
 ";
 
 trait OptionalRow {

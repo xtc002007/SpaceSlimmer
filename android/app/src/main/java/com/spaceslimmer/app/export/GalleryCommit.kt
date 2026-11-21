@@ -20,6 +20,7 @@ sealed class GallerySaveOutcome {
         val count: Int,
         val replaced: Boolean,
         val savedAsNewFallback: Boolean,
+        val savedBytes: Long = 0L,
     ) : GallerySaveOutcome()
 
     data class NeedWriteConsent(val pendingIntent: PendingIntent) : GallerySaveOutcome()
@@ -112,10 +113,14 @@ object GalleryCommit {
                 "GalleryCommit",
                 "saveSucceeded complete: saved=$saved, replaced=$replaced, asNew=$asNew",
             )
+            val freed = jobs.filter { it.state == JobState.SUCCEEDED }.sumOf { job ->
+                job.savedBytes?.coerceAtLeast(0L) ?: 0L
+            }
             GallerySaveOutcome.Saved(
                 count = saved,
                 replaced = replaced > 0 && asNew == 0,
                 savedAsNewFallback = replaceRequested && asNew > 0,
+                savedBytes = freed,
             )
         } catch (consent: WriteConsentRequired) {
             com.spaceslimmer.core.AppLogger.w("GalleryCommit", "Needs user write consent for replace")

@@ -83,6 +83,7 @@ struct DispatchWork {
 pub struct CoreEngine {
     inner: Mutex<EngineInner>,
     cancelled_jobs: Mutex<HashSet<String>>,
+    active_scans: Mutex<std::collections::HashMap<String, Arc<crate::scan::ActiveScanSession>>>,
 }
 
 #[uniffi::export]
@@ -142,6 +143,7 @@ impl CoreEngine {
                 this: Weak::new(),
             }),
             cancelled_jobs: Mutex::new(HashSet::new()),
+            active_scans: Mutex::new(std::collections::HashMap::new()),
         });
         engine.inner.lock().this = Arc::downgrade(&engine);
         if !recovered_dispatch.is_empty() {
@@ -891,6 +893,405 @@ impl CoreEngine {
         }
         Ok(job_view_from_jobs(&view))
     }
+
+    // ==========================================
+    // Storage Analyzer / Scan Engine APIs
+    // ==========================================
+
+    /// Start a storage scan session.
+    pub fn start_scan(
+        &self,
+        req: crate::scan::ScanRequest,
+        observer: Option<Box<dyn crate::scan::ScanObserver>>,
+        lister: Option<Box<dyn crate::scan::PlatformDirLister>>,
+    ) -> Result<String, SsError> {
+        let scan_id = format!("scan-{}", uuid::Uuid::new_v4());
+        let session = Arc::new(crate::scan::ActiveScanSession::new(scan_id.clone()));
+
+        self.active_scans.lock().insert(scan_id.clone(), session.clone());
+
+        let weak_engine = self.inner.lock().this.clone();
+        let session_clone = session.clone();
+        let req_clone = req.clone();
+
+        thread::spawn(move || {
+            let on_persist = Box::new(move |summary: &crate::scan::ScanSummary, tree: &ss_scan::ScanTree| {
+                if let Some(engine) = weak_engine.upgrade() {
+                    let cat_stats = tree.category_stats(tree.root);
+                    let summary_row = ss_sqlite::ScanSummaryRow {
+                        id: summary.id.clone(),
+                        created_at: summary.created_at,
+                        scope_json: summary.scope_json.clone(),
+                        source_level: summary.source_level.clone(),
+                        root_path: summary.root_path.clone(),
+                        total_bytes: summary.total_bytes,
+                        used_bytes: summary.used_bytes,
+                        free_bytes: summary.free_bytes,
+                        scanned_bytes: summary.scanned_bytes,
+                        file_count: summary.file_count,
+                        duration_ms: summary.duration_ms,
+                    };
+                    let inner = engine.inner.lock();
+                    let _ = inner.scheduler.store().insert_scan(&summary_row, tree, &cat_stats);
+                }
+            });
+
+            let _ = crate::scan::execute_scan(
+                session_clone,
+                req_clone,
+                observer,
+                lister,
+                Some(on_persist),
+            );
+        });
+
+        Ok(scan_id)
+    }
+
+    /// Pause an in-flight scan.
+    pub fn pause_scan(&self, scan_id: &str) -> Result<(), SsError> {
+        if let Some(session) = self.active_scans.lock().get(scan_id) {
+            session.pause_flag.store(true, std::sync::atomic::Ordering::Relaxed);
+            Ok(())
+        } else {
+            Err(SsError::NotFound)
+        }
+    }
+
+    /// Resume a paused scan.
+    pub fn resume_scan(&self, scan_id: &str) -> Result<(), SsError> {
+        if let Some(session) = self.active_scans.lock().get(scan_id) {
+            session.pause_flag.store(false, std::sync::atomic::Ordering::Relaxed);
+            Ok(())
+        } else {
+            Err(SsError::NotFound)
+        }
+    }
+
+    /// Cancel an in-flight scan.
+    pub fn cancel_scan(&self, scan_id: &str) -> Result<(), SsError> {
+        if let Some(session) = self.active_scans.lock().get(scan_id) {
+            session.cancel_flag.store(true, std::sync::atomic::Ordering::Relaxed);
+            Ok(())
+        } else {
+            Err(SsError::NotFound)
+        }
+    }
+
+    /// Get current summary for a scan.
+    pub fn get_scan_summary(&self, scan_id: &str) -> Result<crate::scan::ScanSummary, SsError> {
+        if let Some(session) = self.active_scans.lock().get(scan_id) {
+            if let Some(s) = session.summary.read().as_ref() {
+                return Ok(s.clone());
+            }
+        }
+        let row = self
+            .inner
+            .lock()
+            .scheduler
+            .store()
+            .get_scan_summary(scan_id)
+            .map_err(|_| SsError::NotFound)?;
+
+        Ok(crate::scan::ScanSummary {
+            id: row.id,
+            created_at: row.created_at,
+            scope_json: row.scope_json,
+            source_level: row.source_level,
+            root_path: row.root_path,
+            total_bytes: row.total_bytes,
+            used_bytes: row.used_bytes,
+            free_bytes: row.free_bytes,
+            scanned_bytes: row.scanned_bytes,
+            file_count: row.file_count,
+            duration_ms: row.duration_ms,
+        })
+    }
+
+    /// Get detailed info for a single node in the active scan tree.
+    pub fn get_scan_node(&self, scan_id: &str, node_id: u32) -> Result<crate::scan::NodeView, SsError> {
+        let scans = self.active_scans.lock();
+        let session = scans.get(scan_id).ok_or(SsError::NotFound)?;
+        let tree_guard = session.tree.read();
+        let tree = tree_guard.as_ref().ok_or(SsError::NotFound)?;
+
+        crate::scan::make_node_view(tree, node_id).ok_or(SsError::NotFound)
+    }
+
+    /// Get list of immediate children for a directory node with pagination.
+    pub fn get_scan_children(
+        &self,
+        scan_id: &str,
+        node_id: u32,
+        offset: u32,
+        limit: u32,
+    ) -> Result<Vec<crate::scan::NodeView>, SsError> {
+        let scans = self.active_scans.lock();
+        let session = scans.get(scan_id).ok_or(SsError::NotFound)?;
+        let tree_guard = session.tree.read();
+        let tree = tree_guard.as_ref().ok_or(SsError::NotFound)?;
+
+        let child_ids = tree.children(node_id);
+        let start = (offset as usize).min(child_ids.len());
+        let end = (start + limit as usize).min(child_ids.len());
+
+        let mut res = Vec::new();
+        for &cid in &child_ids[start..end] {
+            if let Some(view) = crate::scan::make_node_view(tree, cid) {
+                res.push(view);
+            }
+        }
+        Ok(res)
+    }
+
+    /// Compute Treemap layout for children of a given node in the tree.
+    pub fn get_treemap_layout(
+        &self,
+        scan_id: &str,
+        node_id: u32,
+        width: f32,
+        height: f32,
+        min_rect_px: f32,
+        max_items: u32,
+    ) -> Result<crate::scan::TreemapViewResult, SsError> {
+        let scans = self.active_scans.lock();
+        let session = scans.get(scan_id).ok_or(SsError::NotFound)?;
+        let tree_guard = session.tree.read();
+        let tree = tree_guard.as_ref().ok_or(SsError::NotFound)?;
+
+        Ok(crate::scan::generate_treemap_for_node(
+            tree,
+            node_id,
+            width,
+            height,
+            min_rect_px,
+            max_items,
+        ))
+    }
+
+    /// Get category distribution statistics under a node.
+    pub fn get_category_stats(
+        &self,
+        scan_id: &str,
+        node_id: u32,
+    ) -> Result<Vec<crate::scan::CategoryStatView>, SsError> {
+        let scans = self.active_scans.lock();
+        let session = scans.get(scan_id).ok_or(SsError::NotFound)?;
+        let tree_guard = session.tree.read();
+        let tree = tree_guard.as_ref().ok_or(SsError::NotFound)?;
+
+        let raw_stats = tree.category_stats(node_id);
+        let views = raw_stats
+            .into_iter()
+            .map(|(cat, bytes, count)| crate::scan::CategoryStatView {
+                category_key: cat.key().to_string(),
+                display_name: cat.display_name().to_string(),
+                color_hex: cat.default_color_hex().to_string(),
+                bytes,
+                file_count: count,
+                is_compressible: cat.is_compressible(),
+                is_junk_candidate: cat.is_junk_candidate(),
+            })
+            .collect();
+
+        Ok(views)
+    }
+
+    /// Get largest files under a given node.
+    pub fn get_top_files(
+        &self,
+        scan_id: &str,
+        node_id: u32,
+        min_size: u64,
+        limit: u32,
+    ) -> Result<Vec<crate::scan::NodeView>, SsError> {
+        let scans = self.active_scans.lock();
+        let session = scans.get(scan_id).ok_or(SsError::NotFound)?;
+        let tree_guard = session.tree.read();
+        let tree = tree_guard.as_ref().ok_or(SsError::NotFound)?;
+
+        let top_ids = tree.top_files(node_id, min_size, limit as usize);
+        let mut res = Vec::new();
+        for id in top_ids {
+            if let Some(view) = crate::scan::make_node_view(tree, id) {
+                res.push(view);
+            }
+        }
+        Ok(res)
+    }
+
+    /// Detect duplicate files under a node.
+    pub fn find_duplicates(
+        &self,
+        scan_id: &str,
+        node_id: u32,
+        min_size: u64,
+        max_groups: u32,
+    ) -> Result<Vec<crate::scan::DuplicateGroupView>, SsError> {
+        let scans = self.active_scans.lock();
+        let session = scans.get(scan_id).ok_or(SsError::NotFound)?;
+        let tree_guard = session.tree.read();
+        let tree = tree_guard.as_ref().ok_or(SsError::NotFound)?;
+
+        Ok(crate::scan::find_tree_duplicates(
+            tree, node_id, min_size, max_groups,
+        ))
+    }
+
+    /// Apply deletion of nodes incrementally to the in-memory tree and SQLite.
+    pub fn apply_scan_removed(
+        &self,
+        scan_id: &str,
+        removed_node_ids: Vec<u32>,
+    ) -> Result<(), SsError> {
+        let scans = self.active_scans.lock();
+        let session = scans.get(scan_id).ok_or(SsError::NotFound)?;
+        let mut tree_guard = session.tree.write();
+        let tree = tree_guard.as_mut().ok_or(SsError::NotFound)?;
+
+        tree.apply_removed(&removed_node_ids);
+
+        // Update session summary in memory
+        if let Some(summary) = session.summary.write().as_mut() {
+            let root_node = tree.nodes.get(tree.root as usize);
+            if let Some(r) = root_node {
+                summary.scanned_bytes = r.size_physical;
+                summary.file_count = r.file_count;
+            }
+        }
+
+        // Persist updated tree and category stats to SQLite
+        let cat_stats = tree.category_stats(tree.root);
+        let inner = self.inner.lock();
+        let _ = inner
+            .scheduler
+            .store()
+            .update_scan_tree(scan_id, tree, &cat_stats);
+
+        Ok(())
+    }
+
+    /// List past saved scan sessions.
+    pub fn list_historical_scans(&self, limit: u32) -> Result<Vec<crate::scan::ScanSummary>, SsError> {
+        let rows = self
+            .inner
+            .lock()
+            .scheduler
+            .store()
+            .list_scans(limit)
+            .map_err(|e| SsError::Db(e.to_string()))?;
+
+        Ok(rows
+            .into_iter()
+            .map(|row| crate::scan::ScanSummary {
+                id: row.id,
+                created_at: row.created_at,
+                scope_json: row.scope_json,
+                source_level: row.source_level,
+                root_path: row.root_path,
+                total_bytes: row.total_bytes,
+                used_bytes: row.used_bytes,
+                free_bytes: row.free_bytes,
+                scanned_bytes: row.scanned_bytes,
+                file_count: row.file_count,
+                duration_ms: row.duration_ms,
+            })
+            .collect())
+    }
+
+    /// Load a historical scan from SQLite into memory for interactive inspection.
+    pub fn load_historical_scan(&self, scan_id: &str) -> Result<crate::scan::ScanSummary, SsError> {
+        let (summary_row, tree) = {
+            let inner = self.inner.lock();
+            let store = inner.scheduler.store();
+            let summary_row = store
+                .get_scan_summary(scan_id)
+                .map_err(|_| SsError::NotFound)?;
+            let tree = store
+                .load_scan_tree(scan_id)
+                .map_err(|e| SsError::Db(e.to_string()))?;
+            (summary_row, tree)
+        };
+
+        let summary = crate::scan::ScanSummary {
+            id: summary_row.id.clone(),
+            created_at: summary_row.created_at,
+            scope_json: summary_row.scope_json,
+            source_level: summary_row.source_level,
+            root_path: summary_row.root_path,
+            total_bytes: summary_row.total_bytes,
+            used_bytes: summary_row.used_bytes,
+            free_bytes: summary_row.free_bytes,
+            scanned_bytes: summary_row.scanned_bytes,
+            file_count: summary_row.file_count,
+            duration_ms: summary_row.duration_ms,
+        };
+
+        let session = Arc::new(crate::scan::ActiveScanSession::new(scan_id.to_string()));
+        *session.tree.write() = Some(tree);
+        *session.summary.write() = Some(summary.clone());
+
+        self.active_scans.lock().insert(scan_id.to_string(), session);
+
+        Ok(summary)
+    }
+
+    /// Delete a saved historical scan from SQLite.
+    pub fn delete_historical_scan(&self, scan_id: &str) -> Result<(), SsError> {
+        self.active_scans.lock().remove(scan_id);
+        self.inner
+            .lock()
+            .scheduler
+            .store()
+            .delete_scan(scan_id)
+            .map_err(|e| SsError::Db(e.to_string()))?;
+        Ok(())
+    }
+
+    /// Compare storage differences between two scans.
+    pub fn compare_scans(
+        &self,
+        older_id: &str,
+        newer_id: &str,
+    ) -> Result<Vec<crate::scan::ScanDiffView>, SsError> {
+        let rows = self
+            .inner
+            .lock()
+            .scheduler
+            .store()
+            .compare_scans(older_id, newer_id)
+            .map_err(|e| SsError::Db(e.to_string()))?;
+
+        Ok(rows
+            .into_iter()
+            .map(|r| {
+                let cat = ss_classify::FileCategory::from_u8(r.category);
+                crate::scan::ScanDiffView {
+                    category_key: cat.key().to_string(),
+                    display_name: cat.display_name().to_string(),
+                    older_bytes: r.older_bytes,
+                    newer_bytes: r.newer_bytes,
+                    delta_bytes: r.delta_bytes,
+                    older_files: r.older_files,
+                    newer_files: r.newer_files,
+                    delta_files: r.delta_files,
+                }
+            })
+            .collect())
+    }
+
+    /// Export a scan hierarchy to a WinDirStat-compatible CSV file.
+    pub fn export_scan_csv(&self, scan_id: &str, dst_path: &str) -> Result<(), SsError> {
+        let scans = self.active_scans.lock();
+        let session = scans.get(scan_id).ok_or(SsError::NotFound)?;
+        let tree_guard = session.tree.read();
+        let tree = tree_guard.as_ref().ok_or(SsError::NotFound)?;
+
+        crate::scan::export_tree_to_csv(tree, dst_path)
+            .map_err(|e| SsError::Io(e.to_string()))?;
+        Ok(())
+    }
+
 }
 
 impl CoreEngine {
@@ -1172,6 +1573,8 @@ impl EngineInner {
         }
         Ok(work)
     }
+
+
 }
 
 fn ensure_dir(path: &str) -> Result<(), SsError> {
@@ -1183,6 +1586,7 @@ fn ensure_dir(path: &str) -> Result<(), SsError> {
     Ok(())
 }
 
+#[allow(dead_code)]
 fn now_ms() -> i64 {
     use std::time::{SystemTime, UNIX_EPOCH};
     SystemTime::now()

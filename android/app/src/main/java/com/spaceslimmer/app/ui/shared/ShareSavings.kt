@@ -5,7 +5,8 @@ import android.content.Intent
 import com.spaceslimmer.app.R
 
 fun shareSavedBytes(context: Context, savedBytes: Long) {
-    val text = context.getString(R.string.share_savings_text, formatBytes(context, savedBytes))
+    val baseText = context.getString(R.string.share_savings_text, formatBytes(context, savedBytes))
+    val text = "$baseText\nhttps://play.google.com/store/apps/details?id=com.spaceslimmer.app"
     val intent = Intent(Intent.ACTION_SEND).apply {
         type = "text/plain"
         putExtra(Intent.EXTRA_TEXT, text)

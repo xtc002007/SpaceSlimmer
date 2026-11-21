@@ -21,4 +21,6 @@
     <string name="fail_cancelled">キャンセルされました</string>
     <string name="fail_platform">プラットフォームのエンコーダーが失敗しました</string>
     <string name="fail_unknown">不明なエラーが発生しました</string>
+    <string name="vault_original_file">アルバムの元ファイル (ID: %1$s)</string>
+    <string name="vault_original_path">アルバムの元の保存場所</string>
 </resources>

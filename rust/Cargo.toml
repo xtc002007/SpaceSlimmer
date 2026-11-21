@@ -9,6 +9,10 @@ members = [
     "crates/ss-jobs",
     "crates/ss-platform",
     "crates/ss-sqlite",
+    "crates/ss-classify",
+    "crates/ss-treemap",
+    "crates/ss-dupe",
+    "crates/ss-scan",
     "uniffi-bindgen",
 ]
 
@@ -28,6 +32,10 @@ ss-audio = { path = "crates/ss-audio" }
 ss-jobs = { path = "crates/ss-jobs" }
 ss-platform = { path = "crates/ss-platform" }
 ss-sqlite = { path = "crates/ss-sqlite" }
+ss-classify = { path = "crates/ss-classify" }
+ss-treemap = { path = "crates/ss-treemap" }
+ss-dupe = { path = "crates/ss-dupe" }
+ss-scan = { path = "crates/ss-scan" }
 thiserror = "2"
 uniffi = "0.29.4"
 serde = { version = "1", features = ["derive"] }

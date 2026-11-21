@@ -21,4 +21,6 @@
     <string name="fail_cancelled">已取消</string>
     <string name="fail_platform">平台編碼失敗</string>
     <string name="fail_unknown">未知錯誤</string>
+    <string name="vault_original_file">相簿原檔案 (ID: %1$s)</string>
+    <string name="vault_original_path">相簿原位置</string>
 </resources>

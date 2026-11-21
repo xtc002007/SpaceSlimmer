@@ -58,6 +58,8 @@ import androidx.compose.ui.text.style.TextAlign
 
 import androidx.compose.ui.text.style.TextOverflow
 
+import androidx.compose.ui.unit.TextUnit
+import androidx.compose.ui.unit.sp
 import androidx.compose.ui.unit.dp
 
 import com.spaceslimmer.app.R
@@ -178,7 +180,7 @@ fun <T> SsSegmented(
 
                     )
 
-                    .padding(vertical = 8.dp, horizontal = if (scrollable) 12.dp else 4.dp),
+                    .padding(vertical = 8.dp, horizontal = if (scrollable) 12.dp else if (options.size >= 5) 2.dp else 4.dp),
 
                 contentAlignment = Alignment.Center,
 
@@ -188,7 +190,9 @@ fun <T> SsSegmented(
 
                     text = option.label,
 
-                    style = MaterialTheme.typography.labelLarge,
+                    style = if (options.size >= 5 && !scrollable) MaterialTheme.typography.labelMedium else MaterialTheme.typography.labelLarge,
+
+                    fontSize = if (options.size >= 5 && !scrollable) 11.5.sp else TextUnit.Unspecified,
 
                     color = when {
 

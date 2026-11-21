@@ -1,0 +1,15 @@
+[package]
+name = "ss-dupe"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+publish.workspace = true
+rust-version.workspace = true
+description = "Three-tier fast duplicate file finder for SpaceSlimmer."
+
+[lints]
+workspace = true
+
+[dependencies]
+serde = { workspace = true, features = ["derive"] }
+crc32fast = "1"

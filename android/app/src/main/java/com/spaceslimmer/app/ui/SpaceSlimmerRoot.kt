@@ -68,6 +68,11 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import uniffi.ss_core.CoreEngine
 import uniffi.ss_core.MediaKind
+import com.spaceslimmer.app.ui.storage.ScanDiffScreen
+import com.spaceslimmer.app.ui.storage.ScanProgressScreen
+import com.spaceslimmer.app.ui.storage.ScanResultScreen
+import com.spaceslimmer.app.ui.storage.StorageHomeScreen
+import com.spaceslimmer.app.viewmodel.StorageScanViewModel
 
 @Composable
 fun SpaceSlimmerRoot(
@@ -80,6 +85,7 @@ fun SpaceSlimmerRoot(
     val navController = rememberNavController()
     val photoViewModel: PhotoCompressViewModel = viewModel()
     val mediaViewModel: MediaCompressViewModel = viewModel()
+    val storageViewModel: StorageScanViewModel = viewModel()
     val context = LocalContext.current
     var showOnboarding by remember { mutableStateOf(AppPrefs.isFirstRun(context)) }
     var pendingRoute by remember { mutableStateOf<String?>(null) }
@@ -91,6 +97,7 @@ fun SpaceSlimmerRoot(
         when (launchAction) {
             "radar" -> pendingRoute = "radar"
             "history" -> mainStartTab = MainTab.History
+            "storage" -> mainStartTab = MainTab.Storage
             "report" -> pendingRoute = "report"
             "recent_week" -> pendingRoute = "radar/recent"
             "compress" -> Unit
@@ -252,6 +259,21 @@ fun SpaceSlimmerRoot(
                         modifier = modifier,
                     )
                 },
+                storageContent = { modifier ->
+                    StorageHomeScreen(
+                        viewModel = storageViewModel,
+                        onNavigateToProgress = { scanId ->
+                            navController.navigate("storage/progress/$scanId")
+                        },
+                        onNavigateToResult = { scanId ->
+                            navController.navigate("storage/result/$scanId")
+                        },
+                        onNavigateToDiff = { olderId, newerId ->
+                            navController.navigate("storage/diff/$olderId/$newerId")
+                        },
+                        modifier = modifier,
+                    )
+                },
             )
         }
         composable("history/job/{groupId}/{jobId}") { entry ->
@@ -365,6 +387,101 @@ fun SpaceSlimmerRoot(
                 groupId = groupId,
                 onBack = { navController.popBackStack() },
                 viewModel = mediaViewModel,
+            )
+        }
+        composable("storage/progress/{scanId}") { entry ->
+            ScanProgressScreen(
+                viewModel = storageViewModel,
+                onFinished = { scanId ->
+                    navController.navigate("storage/result/$scanId") {
+                        popUpTo("storage/progress/{scanId}") { inclusive = true }
+                    }
+                },
+                onCancelled = {
+                    navController.popBackStack()
+                },
+            )
+        }
+        composable("storage/result/{scanId}") { entry ->
+            val scanId = entry.arguments?.getString("scanId") ?: return@composable
+            ScanResultScreen(
+                scanId = scanId,
+                viewModel = storageViewModel,
+                onBack = { navController.popBackStack() },
+                onCompressNodes = { nodes ->
+                    val compressibleNodes = nodes.filter { it.isCompressible }
+                    if (compressibleNodes.isNotEmpty()) {
+                        scope.launch {
+                            val images = compressibleNodes.filter { it.categoryKey == "image" }
+                            val videos = compressibleNodes.filter { it.categoryKey == "video" }
+                            val audios = compressibleNodes.filter { it.categoryKey == "audio" }
+
+                            fun resolveNodeUri(node: uniffi.ss_core.NodeView, kind: MediaKind): Uri {
+                                val safUri = com.spaceslimmer.core.SafDirLister.getDocumentUri(node.path)
+                                if (safUri != null) return safUri
+                                val mediaUri = com.spaceslimmer.core.MediaStoreDirLister.getContentUri(node.path)
+                                if (mediaUri != null) return mediaUri
+                                if (node.path.startsWith("content://")) return Uri.parse(node.path)
+                                val resolved = com.spaceslimmer.core.GalleryWriter.resolveReplaceUri(context, node.path, kind)
+                                return resolved ?: Uri.fromFile(java.io.File(node.path))
+                            }
+
+                            if (images.isNotEmpty() && videos.isEmpty() && audios.isEmpty()) {
+                                val imgUris = images.map { resolveNodeUri(it, MediaKind.IMAGE) }
+                                photoViewModel.importUris(imgUris).onSuccess {
+                                    mainStartTab = MainTab.Home
+                                    homeImportedKind = MediaKind.IMAGE
+                                    homeImportNonce += 1
+                                    navController.popBackStack("main", false)
+                                }
+                            } else if (videos.isNotEmpty() && images.isEmpty() && audios.isEmpty()) {
+                                val vidUris = videos.map { resolveNodeUri(it, MediaKind.VIDEO) }
+                                mediaViewModel.importUris(vidUris, MediaKind.VIDEO).onSuccess {
+                                    mainStartTab = MainTab.Home
+                                    homeImportedKind = MediaKind.VIDEO
+                                    homeImportNonce += 1
+                                    navController.popBackStack("main", false)
+                                }
+                            } else if (audios.isNotEmpty() && images.isEmpty() && videos.isEmpty()) {
+                                val audUris = audios.map { resolveNodeUri(it, MediaKind.AUDIO) }
+                                mediaViewModel.importUris(audUris, MediaKind.AUDIO).onSuccess {
+                                    mainStartTab = MainTab.Home
+                                    homeImportedKind = MediaKind.AUDIO
+                                    homeImportNonce += 1
+                                    navController.popBackStack("main", false)
+                                }
+                            } else {
+                                if (images.isNotEmpty()) {
+                                    val imgUris = images.map { resolveNodeUri(it, MediaKind.IMAGE) }
+                                    photoViewModel.importUris(imgUris)
+                                }
+                                if (videos.isNotEmpty()) {
+                                    val vidUris = videos.map { resolveNodeUri(it, MediaKind.VIDEO) }
+                                    mediaViewModel.importUris(vidUris, MediaKind.VIDEO)
+                                }
+                                if (audios.isNotEmpty() && videos.isEmpty()) {
+                                    val audUris = audios.map { resolveNodeUri(it, MediaKind.AUDIO) }
+                                    mediaViewModel.importUris(audUris, MediaKind.AUDIO)
+                                }
+                                mainStartTab = MainTab.Home
+                                homeImportedKind = if (videos.isNotEmpty()) MediaKind.VIDEO else MediaKind.IMAGE
+                                homeImportNonce += 1
+                                navController.popBackStack("main", false)
+                            }
+                        }
+                    }
+                },
+            )
+        }
+        composable("storage/diff/{olderId}/{newerId}") { entry ->
+            val olderId = entry.arguments?.getString("olderId") ?: return@composable
+            val newerId = entry.arguments?.getString("newerId") ?: return@composable
+            LaunchedEffect(olderId, newerId) {
+                storageViewModel.compareScans(olderId, newerId)
+            }
+            ScanDiffScreen(
+                viewModel = storageViewModel,
+                onBack = { navController.popBackStack() },
             )
         }
     }

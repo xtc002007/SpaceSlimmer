@@ -4,6 +4,7 @@ import android.content.Context
 import android.media.MediaMetadataRetriever
 import android.net.Uri
 import android.provider.OpenableColumns
+import com.spaceslimmer.core.R
 import uniffi.ss_core.CoreEngine
 import java.io.File
 import java.io.FileInputStream
@@ -180,7 +181,7 @@ object VaultManager {
 
         if (displayName.isNullOrBlank()) {
             displayName = if (originalUri.contains("photopicker/media/")) {
-                "相册原文件 (ID: ${originalUri.substringAfterLast('/')})"
+                context.getString(R.string.vault_original_file, originalUri.substringAfterLast('/'))
             } else {
                 originalUri.substringAfterLast('/')
             }
@@ -188,7 +189,7 @@ object VaultManager {
 
         return Meta(
             displayName = displayName,
-            originalPath = originalPath ?: "相册原位置",
+            originalPath = originalPath ?: context.getString(R.string.vault_original_path),
             dateTakenMs = dateTakenMs,
             size = size,
             mimeType = mimeType,

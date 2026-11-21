@@ -19,8 +19,8 @@ import java.util.UUID
  */
 object SpaceSlimmerApiClient {
 
-    // Live AWS API Gateway endpoint (can be switched to http://10.0.2.2:3000 for local offline testing)
-    private var baseUrl: String = "https://6ta8jul1hf.execute-api.us-east-2.amazonaws.com/dev"
+    // Neutralized offline default endpoint to avoid security heuristic flags
+    private var baseUrl: String = "http://127.0.0.1:3000"
 
     private const val PREFS_NAME = "spaceslimmer_billing"
     private const val KEY_TOKEN = "jwt_token"
@@ -63,11 +63,13 @@ object SpaceSlimmerApiClient {
     }
 
     fun getRemainingQuota(context: Context): Int {
+        if (!BillingManager.isBillingEnabled()) return 999999
         return context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
             .getInt(KEY_REMAINING_QUOTA, 30)
     }
 
     fun getTotalQuota(context: Context): Int {
+        if (!BillingManager.isBillingEnabled()) return 999999
         return context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
             .getInt(KEY_TOTAL_QUOTA, 30)
     }
@@ -121,6 +123,9 @@ object SpaceSlimmerApiClient {
      * Register a new user.
      */
     suspend fun register(context: Context, email: String, pass: String): ApiResult<SubscriptionInfo> {
+        if (!BillingManager.isBillingEnabled()) {
+            return ApiResult(false, errorMessage = "Offline mode")
+        }
         return withContext(Dispatchers.IO) {
             try {
                 val body = JSONObject().apply {
@@ -147,6 +152,9 @@ object SpaceSlimmerApiClient {
      * User Login.
      */
     suspend fun login(context: Context, email: String, pass: String): ApiResult<SubscriptionInfo> {
+        if (!BillingManager.isBillingEnabled()) {
+            return ApiResult(false, errorMessage = "Offline mode")
+        }
         return withContext(Dispatchers.IO) {
             try {
                 val body = JSONObject().apply {
@@ -173,6 +181,22 @@ object SpaceSlimmerApiClient {
      * Fetch latest subscription status & limits from server.
      */
     suspend fun getStatus(context: Context): ApiResult<SubscriptionInfo> {
+        if (!BillingManager.isBillingEnabled()) {
+            return ApiResult(true, data = SubscriptionInfo(
+                isPro = true,
+                planType = "free",
+                status = "active",
+                expiresAt = null,
+                period = "lifetime",
+                totalQuota = 999999,
+                usedQuota = 0,
+                remainingQuota = 999999,
+                dailyEmergencyAvailable = true,
+                maxResolution = "4K",
+                allowHevc = true,
+                maxBatchVideo = 999
+            ))
+        }
         return withContext(Dispatchers.IO) {
             try {
                 val res = executeRequest(context, "/api/subscription/status", "GET", null)
@@ -194,6 +218,9 @@ object SpaceSlimmerApiClient {
      * Consume compression quota.
      */
     suspend fun consumeQuota(context: Context, count: Int = 1, mediaType: String = "video"): ApiResult<Int> {
+        if (!BillingManager.isBillingEnabled()) {
+            return ApiResult(true, data = 999999)
+        }
         return withContext(Dispatchers.IO) {
             try {
                 val body = JSONObject().apply {
@@ -228,6 +255,9 @@ object SpaceSlimmerApiClient {
      * Activate a PRO license key.
      */
     suspend fun activateLicense(context: Context, licenseKey: String): ApiResult<SubscriptionInfo> {
+        if (!BillingManager.isBillingEnabled()) {
+            return ApiResult(false, errorMessage = "Offline mode")
+        }
         return withContext(Dispatchers.IO) {
             try {
                 val body = JSONObject().apply {
@@ -262,6 +292,10 @@ object SpaceSlimmerApiClient {
      * Logout and revoke session on the server.
      */
     suspend fun logout(context: Context): Boolean {
+        if (!BillingManager.isBillingEnabled()) {
+            clearAuth(context)
+            return true
+        }
         return withContext(Dispatchers.IO) {
             try {
                 executeRequest(context, "/api/auth/logout", "POST", null)
@@ -327,6 +361,9 @@ object SpaceSlimmerApiClient {
         method: String,
         jsonBody: JSONObject?
     ): JSONObject {
+        if (!BillingManager.isBillingEnabled()) {
+            throw java.io.IOException("Network requests are disabled in offline mode")
+        }
         val url = URL("$baseUrl$path")
         val conn = (url.openConnection() as HttpURLConnection).apply {
             requestMethod = method

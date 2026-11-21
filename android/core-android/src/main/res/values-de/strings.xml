@@ -21,4 +21,6 @@
     <string name="fail_cancelled">Abgebrochen</string>
     <string name="fail_platform">Plattform-Encoder fehlgeschlagen</string>
     <string name="fail_unknown">Unbekannter Fehler</string>
+    <string name="vault_original_file">Originaldatei aus Fotomediathek (ID: %1$s)</string>
+    <string name="vault_original_path">Ursprünglicher Speicherort</string>
 </resources>

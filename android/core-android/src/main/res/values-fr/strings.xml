@@ -21,4 +21,6 @@
     <string name="fail_cancelled">Annulé</string>
     <string name="fail_platform">Échec de l’encodeur système</string>
     <string name="fail_unknown">Erreur inconnue</string>
+    <string name="vault_original_file">Fichier d\'origine de la galerie (ID: %1$s)</string>
+    <string name="vault_original_path">Emplacement d\'origine dans la galerie</string>
 </resources>

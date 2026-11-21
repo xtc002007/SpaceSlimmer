@@ -6,6 +6,7 @@ import androidx.compose.material.icons.filled.History
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.Person
+import androidx.compose.material.icons.filled.PieChart
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -27,7 +28,7 @@ import com.spaceslimmer.app.R
 import com.spaceslimmer.app.ui.components.SsScreen
 import uniffi.ss_core.CoreEngine
 
-enum class MainTab { Home, History, Vault, Settings }
+enum class MainTab { Home, Storage, History, Vault, Settings }
 
 @Composable
 fun MainShell(
@@ -35,6 +36,7 @@ fun MainShell(
     engineError: String?,
     onNavigate: (String) -> Unit,
     homeContent: @Composable (Modifier) -> Unit,
+    storageContent: @Composable (Modifier) -> Unit = {},
     startTab: MainTab = MainTab.Home,
 ) {
     var tabName by rememberSaveable { mutableStateOf(startTab.name) }
@@ -64,6 +66,13 @@ fun MainShell(
                     colors = navItemColors,
                 )
                 NavigationBarItem(
+                    selected = tab == MainTab.Storage,
+                    onClick = { tabName = MainTab.Storage.name },
+                    icon = { Icon(Icons.Default.PieChart, contentDescription = stringResource(R.string.tab_storage)) },
+                    label = { Text(stringResource(R.string.tab_storage)) },
+                    colors = navItemColors,
+                )
+                NavigationBarItem(
                     selected = tab == MainTab.History,
                     onClick = { tabName = MainTab.History.name },
                     icon = { Icon(Icons.Default.History, contentDescription = stringResource(R.string.tab_history)) },
@@ -89,6 +98,7 @@ fun MainShell(
     ) { padding ->
         when (tab) {
             MainTab.Home -> homeContent(Modifier.padding(padding))
+            MainTab.Storage -> storageContent(Modifier.padding(padding))
             MainTab.History -> HistoryScreen(
                 engine = engine,
                 modifier = Modifier.padding(padding),

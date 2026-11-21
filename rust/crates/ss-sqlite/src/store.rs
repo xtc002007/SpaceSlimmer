@@ -3,7 +3,7 @@ use std::io;
 use std::path::Path;
 
 use rusqlite::{params, Connection};
-use serde::{de::DeserializeOwned, Serialize};
+use serde::{de::DeserializeOwned, Deserialize, Serialize};
 
 use crate::error::DbError;
 use crate::schema::migrate;
@@ -522,6 +522,225 @@ impl<'a> SettingsStore<'a> {
     }
 }
 
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
+pub struct ScanSummaryRow {
+    pub id: String,
+    pub created_at: i64,
+    pub scope_json: String,
+    pub source_level: String,
+    pub root_path: String,
+    pub total_bytes: u64,
+    pub used_bytes: u64,
+    pub free_bytes: u64,
+    pub scanned_bytes: u64,
+    pub file_count: u32,
+    pub duration_ms: u64,
+}
+
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
+pub struct ScanCategoryStatRow {
+    pub scan_id: String,
+    pub category: u8,
+    pub bytes: u64,
+    pub file_count: u32,
+}
+
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
+pub struct ScanDiffRow {
+    pub category: u8,
+    pub older_bytes: u64,
+    pub newer_bytes: u64,
+    pub delta_bytes: i64,
+    pub older_files: u32,
+    pub newer_files: u32,
+    pub delta_files: i32,
+}
+
+impl Store {
+    pub fn insert_scan(
+        &self,
+        summary: &ScanSummaryRow,
+        tree: &ss_scan::ScanTree,
+        category_stats: &[(ss_classify::FileCategory, u64, u32)],
+    ) -> Result<(), DbError> {
+        let tree_blob = serde_json::to_string(tree)?;
+        self.conn.execute(
+            "INSERT INTO scans(id, created_at, scope_json, source_level, root_path, total_bytes, used_bytes, free_bytes, scanned_bytes, file_count, duration_ms, tree_blob)
+             VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12)",
+            params![
+                summary.id,
+                summary.created_at,
+                summary.scope_json,
+                summary.source_level,
+                summary.root_path,
+                summary.total_bytes,
+                summary.used_bytes,
+                summary.free_bytes,
+                summary.scanned_bytes,
+                summary.file_count,
+                summary.duration_ms,
+                tree_blob,
+            ],
+        )?;
+
+        let mut stat_stmt = self.conn.prepare(
+            "INSERT OR REPLACE INTO scan_category_stats(scan_id, category, bytes, file_count) VALUES (?1, ?2, ?3, ?4)",
+        )?;
+        for &(cat, bytes, count) in category_stats {
+            stat_stmt.execute(params![summary.id, cat.as_u8(), bytes, count])?;
+        }
+
+        Ok(())
+    }
+
+    pub fn update_scan_tree(
+        &self,
+        scan_id: &str,
+        tree: &ss_scan::ScanTree,
+        category_stats: &[(ss_classify::FileCategory, u64, u32)],
+    ) -> Result<(), DbError> {
+        let tree_blob = serde_json::to_string(tree)?;
+        let root_node = tree.nodes.get(tree.root as usize);
+        let (scanned_bytes, file_count) = root_node
+            .map(|n| (n.size_physical, n.file_count))
+            .unwrap_or((0, 0));
+
+        self.conn.execute(
+            "UPDATE scans SET scanned_bytes = ?1, file_count = ?2, tree_blob = ?3 WHERE id = ?4",
+            params![scanned_bytes, file_count, tree_blob, scan_id],
+        )?;
+
+        self.conn.execute("DELETE FROM scan_category_stats WHERE scan_id = ?1", params![scan_id])?;
+
+        let mut stat_stmt = self.conn.prepare(
+            "INSERT INTO scan_category_stats(scan_id, category, bytes, file_count) VALUES (?1, ?2, ?3, ?4)",
+        )?;
+        for &(cat, bytes, count) in category_stats {
+            stat_stmt.execute(params![scan_id, cat.as_u8(), bytes, count])?;
+        }
+
+        Ok(())
+    }
+
+    pub fn list_scans(&self, limit: u32) -> Result<Vec<ScanSummaryRow>, DbError> {
+        let mut stmt = self.conn.prepare(
+            "SELECT id, created_at, scope_json, source_level, root_path, total_bytes, used_bytes, free_bytes, scanned_bytes, file_count, duration_ms
+             FROM scans ORDER BY created_at DESC LIMIT ?1",
+        )?;
+        let rows = stmt.query_map([limit], |row| {
+            Ok(ScanSummaryRow {
+                id: row.get(0)?,
+                created_at: row.get(1)?,
+                scope_json: row.get(2)?,
+                source_level: row.get(3)?,
+                root_path: row.get(4)?,
+                total_bytes: row.get(5)?,
+                used_bytes: row.get(6)?,
+                free_bytes: row.get(7)?,
+                scanned_bytes: row.get(8)?,
+                file_count: row.get(9)?,
+                duration_ms: row.get(10)?,
+            })
+        })?;
+        let mut res = Vec::new();
+        for r in rows {
+            res.push(r?);
+        }
+        Ok(res)
+    }
+
+    pub fn get_scan_summary(&self, id: &str) -> Result<ScanSummaryRow, DbError> {
+        self.conn
+            .query_row(
+                "SELECT id, created_at, scope_json, source_level, root_path, total_bytes, used_bytes, free_bytes, scanned_bytes, file_count, duration_ms
+                 FROM scans WHERE id = ?1",
+                [id],
+                |row| {
+                    Ok(ScanSummaryRow {
+                        id: row.get(0)?,
+                        created_at: row.get(1)?,
+                        scope_json: row.get(2)?,
+                        source_level: row.get(3)?,
+                        root_path: row.get(4)?,
+                        total_bytes: row.get(5)?,
+                        used_bytes: row.get(6)?,
+                        free_bytes: row.get(7)?,
+                        scanned_bytes: row.get(8)?,
+                        file_count: row.get(9)?,
+                        duration_ms: row.get(10)?,
+                    })
+                },
+            )
+            .optional()
+            .map_err(DbError::from)?
+            .ok_or_else(|| DbError::NotFound(id.to_string()))
+    }
+
+    pub fn load_scan_tree(&self, id: &str) -> Result<ss_scan::ScanTree, DbError> {
+        let json: String = self
+            .conn
+            .query_row("SELECT tree_blob FROM scans WHERE id = ?1", [id], |row| {
+                row.get(0)
+            })
+            .optional()
+            .map_err(DbError::from)?
+            .ok_or_else(|| DbError::NotFound(id.to_string()))?;
+        Ok(serde_json::from_str(&json)?)
+    }
+
+    pub fn get_scan_category_stats(&self, id: &str) -> Result<Vec<ScanCategoryStatRow>, DbError> {
+        let mut stmt = self.conn.prepare(
+            "SELECT scan_id, category, bytes, file_count FROM scan_category_stats WHERE scan_id = ?1 ORDER BY bytes DESC",
+        )?;
+        let rows = stmt.query_map([id], |row| {
+            Ok(ScanCategoryStatRow {
+                scan_id: row.get(0)?,
+                category: row.get(1)?,
+                bytes: row.get(2)?,
+                file_count: row.get(3)?,
+            })
+        })?;
+        let mut res = Vec::new();
+        for r in rows {
+            res.push(r?);
+        }
+        Ok(res)
+    }
+
+    pub fn delete_scan(&self, id: &str) -> Result<(), DbError> {
+        self.conn.execute("DELETE FROM scans WHERE id = ?1", [id])?;
+        Ok(())
+    }
+
+    pub fn compare_scans(&self, id_older: &str, id_newer: &str) -> Result<Vec<ScanDiffRow>, DbError> {
+        let older_stats = self.get_scan_category_stats(id_older)?;
+        let newer_stats = self.get_scan_category_stats(id_newer)?;
+
+        let mut diffs = Vec::new();
+        for cat in ss_classify::FileCategory::ALL {
+            let cat_u8 = cat.as_u8();
+            let old = older_stats.iter().find(|s| s.category == cat_u8);
+            let new = newer_stats.iter().find(|s| s.category == cat_u8);
+
+            let old_bytes = old.map(|s| s.bytes).unwrap_or(0);
+            let new_bytes = new.map(|s| s.bytes).unwrap_or(0);
+            let old_files = old.map(|s| s.file_count).unwrap_or(0);
+            let new_files = new.map(|s| s.file_count).unwrap_or(0);
+
+            diffs.push(ScanDiffRow {
+                category: cat_u8,
+                older_bytes: old_bytes,
+                newer_bytes: new_bytes,
+                delta_bytes: (new_bytes as i64) - (old_bytes as i64),
+                older_files: old_files,
+                newer_files: new_files,
+                delta_files: (new_files as i32) - (old_files as i32),
+            });
+        }
+        Ok(diffs)
+    }
+}
+
 trait OptionalRow {
     fn optional(self) -> Result<Option<Self::Item>, rusqlite::Error>;
     type Item;
@@ -701,5 +920,64 @@ mod tests {
         assert!(store.get_job("j1").is_err());
         assert_eq!(store.count_jobs_in_group("g1").unwrap(), 1);
         assert!(store.get_group("g1").is_ok());
+    }
+
+    #[test]
+    fn scan_storage_round_trip_and_diff() {
+        let store = Store::open_in_memory().expect("open");
+        let mut tree = ss_scan::ScanTree::new();
+        let root = tree.add_node(
+            ss_scan::NO_NODE,
+            "root",
+            ss_scan::NodeKind::Directory,
+            ss_classify::FileCategory::Other,
+            1000,
+            1000,
+            10,
+            0,
+        );
+        tree.root = root;
+
+        let summary = ScanSummaryRow {
+            id: "scan-1".into(),
+            created_at: 100,
+            scope_json: "{}".into(),
+            source_level: "L3".into(),
+            root_path: "/storage/emulated/0".into(),
+            total_bytes: 100_000,
+            used_bytes: 60_000,
+            free_bytes: 40_000,
+            scanned_bytes: 55_000,
+            file_count: 50,
+            duration_ms: 1200,
+        };
+
+        let stats = vec![
+            (ss_classify::FileCategory::Video, 30_000, 10),
+            (ss_classify::FileCategory::Image, 25_000, 40),
+        ];
+
+        store.insert_scan(&summary, &tree, &stats).expect("insert");
+
+        let list = store.list_scans(10).expect("list");
+        assert_eq!(list.len(), 1);
+        assert_eq!(list[0].id, "scan-1");
+
+        let loaded_tree = store.load_scan_tree("scan-1").expect("load tree");
+        assert_eq!(loaded_tree.root, root);
+
+        let cat_stats = store.get_scan_category_stats("scan-1").expect("cat stats");
+        assert_eq!(cat_stats.len(), 2);
+        // Test update_scan_tree
+        let mut updated_tree = loaded_tree;
+        let _sub = updated_tree.add_node(root, "sub.mp4", ss_scan::NodeKind::File, ss_classify::FileCategory::Video, 500, 500, 20, 0);
+        let updated_stats = vec![(ss_classify::FileCategory::Video, 500, 1)];
+        store.update_scan_tree("scan-1", &updated_tree, &updated_stats).expect("update tree");
+
+        let reloaded = store.load_scan_tree("scan-1").expect("reload tree");
+        assert_eq!(reloaded.nodes.len(), 2);
+        let updated_cat = store.get_scan_category_stats("scan-1").expect("cat stats after update");
+        assert_eq!(updated_cat.len(), 1);
+        assert_eq!(updated_cat[0].bytes, 500);
     }
 }

@@ -109,6 +109,7 @@ fun OutputPolicyRow(
     selected: OutputPolicy,
     onSelected: (OutputPolicy) -> Unit,
     canReplace: Boolean = true,
+    selectedCount: Int = 1,
 ) {
     Text(
         stringResource(R.string.output_policy_title),
@@ -117,7 +118,7 @@ fun OutputPolicyRow(
     )
     val options = buildList {
         add(SsSegmentOption(OutputPolicy.SAVE_AS_NEW, stringResource(R.string.output_save_as_new)))
-        if (canReplace) {
+        if (canReplace || selectedCount == 0) {
             add(SsSegmentOption(OutputPolicy.REPLACE_TO_VAULT, stringResource(R.string.output_replace_vault)))
         }
     }
@@ -126,7 +127,7 @@ fun OutputPolicyRow(
         selected = selected,
         onSelected = onSelected,
     )
-    if (!canReplace) {
+    if (selectedCount > 0 && !canReplace) {
         Text(
             stringResource(R.string.replace_save_as_new_hint),
             style = MaterialTheme.typography.bodySmall,

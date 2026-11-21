@@ -11,3 +11,4 @@ description = "Platform traits injected by Android/iOS (video HW, AAC, FS)."
 workspace = true
 
 [dependencies]
+serde = { workspace = true, features = ["derive"] }

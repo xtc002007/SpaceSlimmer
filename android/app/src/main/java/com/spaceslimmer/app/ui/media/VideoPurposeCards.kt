@@ -40,7 +40,7 @@ fun VideoPurposePresetGrid(
             },
             selected = selected,
             onSelected = onSelect,
-            scrollable = false,
+            scrollable = true,
         )
         val detail = videoPurposeDescription(selected)
         if (detail.isNotEmpty()) {

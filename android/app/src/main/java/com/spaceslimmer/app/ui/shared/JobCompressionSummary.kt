@@ -143,6 +143,9 @@ fun rememberGallerySaveHandler(
     fun applyOutcome(outcome: GallerySaveOutcome) {
         when (outcome) {
             is GallerySaveOutcome.Saved -> {
+                if (outcome.count > 0) {
+                    InAppReviewHelper.onCompressionSuccess(context, outcome.savedBytes)
+                }
                 onMessage(
                     when {
                         outcome.count <= 0 -> context.getString(R.string.save_none)

@@ -21,4 +21,6 @@
     <string name="fail_cancelled">Отменено</string>
     <string name="fail_platform">Сбой системного кодировщика</string>
     <string name="fail_unknown">Неизвестная ошибка</string>
+    <string name="vault_original_file">Исходный файл галереи (ID: %1$s)</string>
+    <string name="vault_original_path">Исходное расположение в галерее</string>
 </resources>

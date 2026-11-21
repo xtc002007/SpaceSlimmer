@@ -21,4 +21,6 @@
     <string name="fail_cancelled">Cancelled</string>
     <string name="fail_platform">Platform encoder failed</string>
     <string name="fail_unknown">Unknown error</string>
+    <string name="vault_original_file">Photo Library File (ID: %1$s)</string>
+    <string name="vault_original_path">Original Photo Location</string>
 </resources>

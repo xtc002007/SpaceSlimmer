@@ -604,6 +604,7 @@ fun HomeCompressSection(
                                 }
                             },
                             canReplace = canReplace,
+                            selectedCount = selectedCount,
                         )
 
                         Text(

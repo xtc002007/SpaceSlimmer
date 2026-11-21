@@ -27,6 +27,8 @@ fun formatBytes(context: Context, bytes: Long): String {
 fun formatBytesCompact(context: Context, bytes: Long): String =
     formatBytes(context, bytes)
 
+fun formatBytes(bytes: Long): String = formatBytesValue(bytes)
+
 internal fun formatBytesValue(bytes: Long): String {
     val value = abs(bytes).toDouble()
     return when {
