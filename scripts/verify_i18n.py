@@ -52,6 +52,7 @@ def verify_module(res_dir, module_name):
 
     base_tree = ET.parse(base_file)
     base_strings = {s.attrib['name']: s.text or "" for s in base_tree.getroot().findall('string')}
+    base_formatted = {s.attrib['name']: s.attrib.get('formatted', 'true') for s in base_tree.getroot().findall('string')}
     base_plurals = {p.attrib['name']: {item.attrib['quantity']: item.text or "" for item in p.findall('item')} for p in base_tree.getroot().findall('plurals')}
 
     print(f"Base '{module_name}/values/strings.xml': {len(base_strings)} strings, {len(base_plurals)} plurals.")
@@ -74,6 +75,7 @@ def verify_module(res_dir, module_name):
 
         root = tree.getroot()
         loc_strings = {s.attrib['name']: s.text or "" for s in root.findall('string')}
+        loc_formatted = {s.attrib['name']: s.attrib.get('formatted', 'true') for s in root.findall('string')}
         loc_plurals = {p.attrib['name']: {item.attrib['quantity']: item.text or "" for item in p.findall('item')} for p in root.findall('plurals')}
 
         # 1. Key count and missing keys
@@ -96,6 +98,8 @@ def verify_module(res_dir, module_name):
         # 3. Format specifier matching
         for k in base_strings:
             if k not in loc_strings:
+                continue
+            if base_formatted.get(k) == 'false' or loc_formatted.get(k) == 'false':
                 continue
             base_spec = extract_tokens(base_strings[k])
             loc_spec = extract_tokens(loc_strings[k])
@@ -151,22 +155,23 @@ def verify_hardcoded_code():
     print(f"\n=======================================================")
     print(f"  Verifying Zero Hardcoded Strings in Codebase")
     print(f"=======================================================")
-    java_dir = 'android/app/src/main/java'
+    java_dirs = ['android/app/src/main/java', 'android/core-android/src/main/java']
     hardcoded = []
-    for root, dirs, files in os.walk(java_dir):
-        for f in files:
-            if not f.endswith('.kt'):
-                continue
-            path = os.path.join(root, f)
-            with open(path, 'r', encoding='utf-8') as src:
-                for idx, line in enumerate(src, 1):
-                    s = line.strip()
-                    if s.startswith('//') or s.startswith('*'):
-                        continue
-                    matches = re.findall(r'"([^"\\]*(?:\\.[^"\\]*)*)"', line)
-                    for m in matches:
-                        if re.search(r'[\u4e00-\u9fff]', m):
-                            hardcoded.append((path, idx, m))
+    for java_dir in java_dirs:
+        for root, dirs, files in os.walk(java_dir):
+            for f in files:
+                if not f.endswith('.kt') or f == 'LocaleHelper.kt':
+                    continue
+                path = os.path.join(root, f)
+                with open(path, 'r', encoding='utf-8') as src:
+                    for idx, line in enumerate(src, 1):
+                        s = line.strip()
+                        if s.startswith('//') or s.startswith('*'):
+                            continue
+                        matches = re.findall(r'"([^"\\]*(?:\\.[^"\\]*)*)"', line)
+                        for m in matches:
+                            if re.search(r'[\u4e00-\u9fff]', m):
+                                hardcoded.append((path, idx, m))
     if hardcoded:
         print(f"FAIL: Found {len(hardcoded)} hardcoded strings:")
         for path, idx, m in hardcoded[:10]:

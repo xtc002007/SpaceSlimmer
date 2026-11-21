@@ -1,0 +1,29 @@
+(() => {
+  const data = {"name": "SpaceSlimmer: 影片壓縮與儲存瘦身", "short": "智慧影片相片無損壓縮，釋放高達80%容量，全景樹圖與安全保險箱復原。", "full": "手機容量總是不足？捨不得刪除珍貴的高畫質影片與家庭回憶？\n\nSpaceSlimmer 是一款專為手機空間深度瘦身打造的智慧媒體壓縮與儲存全景分析利器！最高可為您節省 50%~80% 的影片與相片空間，肉眼無損畫質，且絕不遺失原始檔案。\n\n有別於粗暴刪除檔案的一般清理工具，SpaceSlimmer 的承諾很簡單：守護回憶、大幅縮小體積，並永遠保有隨時還原的機會！\n\n為什麼選擇 SPACESLIMMER？\n\n1. 100% 裝置本機離線處理（零雲端上傳，極致隱私）\n您的隱私相片與影片絕不傳輸至任何外部伺服器。全部處理均於手機端由晶片硬體加速驅動。無需註冊登入，零追蹤，徹底守護您的個人隱私。\n\n2. 原檔安全保險箱（自訂 7~30 天寬限復原期）\n擔心壓縮效果不如預期？選擇取代原檔時，SpaceSlimmer 會自動將原始未壓縮檔案備份於獨立沙盒保險箱中，提供 7~30 天自訂寬限期。在此期間隨時一鍵完整還原回相簿。\n\n3. 即時前後對比拉簾滑桿（所見即所得）\n無需猜測壓縮畫質。內建即時雙軌對比拉簾，原片與壓縮畫面毫秒級同步播放，隨時檢視人臉細節與清晰度，確認滿意後再儲存。\n\n4. 視覺化儲存區塊樹圖（全景看透空間佔用）\n透過直觀的多彩區塊圖形，一目了然看清究竟是哪些大型影片、暫存快取或下載檔案佔滿了手機儲存空間。\n\n5. 智慧指定目標大小（通訊分享絕不超標）\n可快速設定 LINE、WhatsApp (16MB) 或 Gmail (50MB) 等分享限制大小，系統自動演算最佳畫質與碼率。\n\n核心功能：\n- GPU 硬體加速（H.264 與 HEVC / H.265），極速省電低發熱。\n- 4K 平滑降階至 1080p，省下大量空間。\n- 相片與音訊批次壓縮。\n- 重複檔案比對與大檔案快速檢索。\n\n立即下載 SpaceSlimmer，讓您的手機空間重獲新生！"};
+  const nameInput = Array.from(document.querySelectorAll('input[type="text"]'))[0];
+  const shortInput = Array.from(document.querySelectorAll('input[type="text"]'))[1];
+  const fullTextarea = document.querySelector('textarea');
+  
+  function setVal(el, val) {
+    if (!el) return;
+    el.value = val;
+    el.dispatchEvent(new Event('input', { bubbles: true }));
+    el.dispatchEvent(new Event('change', { bubbles: true }));
+    el.dispatchEvent(new Event('blur', { bubbles: true }));
+  }
+  
+  setVal(nameInput, data.name);
+  setVal(shortInput, data.short);
+  setVal(fullTextarea, data.full);
+  
+  const saveDraftBtn = Array.from(document.querySelectorAll('button')).find(b => (b.innerText || '').trim() === '保存为草稿' && !b.disabled);
+  if (saveDraftBtn) saveDraftBtn.click();
+  
+  return {
+    locale: "zh-TW",
+    nameLen: nameInput ? nameInput.value.length : 0,
+    shortLen: shortInput ? shortInput.value.length : 0,
+    fullLen: fullTextarea ? fullTextarea.value.length : 0,
+    saved: !!saveDraftBtn
+  };
+})()

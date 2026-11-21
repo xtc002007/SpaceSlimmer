@@ -1,0 +1,522 @@
+{
+  "audio_replace_library": {
+    "en": "Replace original audio",
+    "zh": "替换原音频文件"
+  },
+  "audio_replaced_count": {
+    "en": "Replaced %1$d audio files",
+    "zh": "已替换 %1$d 个音频"
+  },
+  "audio_save_library": {
+    "en": "Save to library",
+    "zh": "保存到音乐库"
+  },
+  "audio_saved_to_library": {
+    "en": "Saved %1$d audio files to music folder",
+    "zh": "已保存 %1$d 个音频到音乐库"
+  },
+  "notify_complete": {
+    "en": "Compression complete: %1$d/%2$d done, saved %3$s",
+    "zh": "压缩完成：完成 %1$d/%2$d，已省 %3$s"
+  },
+  "scan_channel_desc": {
+    "en": "Background storage analysis notifications",
+    "zh": "后台磁盘全盘扫描通知"
+  },
+  "scan_channel_name": {
+    "en": "Storage Analyzer",
+    "zh": "存储全景分析服务"
+  },
+  "scan_service_preparing": {
+    "en": "Preparing storage scan…",
+    "zh": "正在准备扫描存储空间…"
+  },
+  "scan_service_title": {
+    "en": "SpaceSlimmer Storage Scan",
+    "zh": "SpaceSlimmer 存储全景扫描"
+  },
+  "storage_action_compress": {
+    "en": "Compress",
+    "zh": "压缩文件"
+  },
+  "storage_action_delete": {
+    "en": "Delete",
+    "zh": "删除文件"
+  },
+  "storage_action_delete_vault": {
+    "en": "Move to Vault",
+    "zh": "移入安全隔离仓"
+  },
+  "storage_action_drill_down": {
+    "en": "Open",
+    "zh": "进入目录"
+  },
+  "storage_analyzer_title": {
+    "en": "Storage Analyzer",
+    "zh": "存储全景"
+  },
+  "storage_back": {
+    "en": "Back",
+    "zh": "返回"
+  },
+  "storage_btn_cancel": {
+    "en": "Cancel",
+    "zh": "取消"
+  },
+  "storage_btn_change": {
+    "en": "Change",
+    "zh": "更改"
+  },
+  "storage_btn_delete_scan": {
+    "en": "Delete Snapshot",
+    "zh": "删除此快照"
+  },
+  "storage_btn_diff_compare": {
+    "en": "Compare Scans",
+    "zh": "对比历史快照"
+  },
+  "storage_btn_explore_folder": {
+    "en": "Explore",
+    "zh": "浏览文件夹"
+  },
+  "storage_btn_export_csv": {
+    "en": "Export CSV",
+    "zh": "导出 CSV 报告"
+  },
+  "storage_btn_export_json": {
+    "en": "Export JSON",
+    "zh": "导出 JSON"
+  },
+  "storage_btn_grant": {
+    "en": "Grant",
+    "zh": "授权"
+  },
+  "storage_btn_grant_usage_access": {
+    "en": "Authorize",
+    "zh": "去授权"
+  },
+  "storage_btn_pause": {
+    "en": "Pause",
+    "zh": "暂停"
+  },
+  "storage_btn_rescan": {
+    "en": "Rescan",
+    "zh": "重新扫描"
+  },
+  "storage_btn_resume": {
+    "en": "Resume",
+    "zh": "继续"
+  },
+  "storage_btn_start_scan": {
+    "en": "Start Storage Scan",
+    "zh": "开始存储全景扫描"
+  },
+  "storage_building_tree": {
+    "en": "Building squarified visual arena tree",
+    "zh": "正在构建区块全景树图"
+  },
+  "storage_cat_archive": {
+    "en": "Archives",
+    "zh": "压缩包"
+  },
+  "storage_cat_audio": {
+    "en": "Audio",
+    "zh": "音频"
+  },
+  "storage_cat_compressible": {
+    "en": "Compressible",
+    "zh": "可压缩"
+  },
+  "storage_cat_document": {
+    "en": "Documents",
+    "zh": "文档"
+  },
+  "storage_cat_image": {
+    "en": "Photos",
+    "zh": "图片"
+  },
+  "storage_cat_junk_candidate": {
+    "en": "Junk Candidate",
+    "zh": "可清理冗余"
+  },
+  "storage_cat_other": {
+    "en": "Other",
+    "zh": "其他文件"
+  },
+  "storage_cat_package": {
+    "en": "APKs",
+    "zh": "安装包"
+  },
+  "storage_cat_stat_format": {
+    "en": "%1$s files · %2$s",
+    "zh": "%1$s 个文件 · %2$s"
+  },
+  "storage_cat_system": {
+    "en": "System / Private Data",
+    "zh": "系统与应用数据"
+  },
+  "storage_cat_video": {
+    "en": "Videos",
+    "zh": "视频"
+  },
+  "storage_clear_selection": {
+    "en": "Clear selection",
+    "zh": "清除选择"
+  },
+  "storage_delete_confirm_body": {
+    "en": "Are you sure you want to delete %1$s selected items (%2$s)?",
+    "zh": "确定要删除选中的 %1$s 项（共 %2$s）吗？"
+  },
+  "storage_delete_confirm_title": {
+    "en": "Confirm Deletion",
+    "zh": "确认删除"
+  },
+  "storage_delete_success": {
+    "en": "Deleted %1$s items. Space freed: %2$s.",
+    "zh": "已成功清理 %1$s 项，释放空间 %2$s。"
+  },
+  "storage_deselect_all": {
+    "en": "Deselect All",
+    "zh": "取消全选"
+  },
+  "storage_diff_decreased": {
+    "en": "Decreased",
+    "zh": "减少"
+  },
+  "storage_diff_empty_body": {
+    "en": "Storage state between these two snapshots is identical.",
+    "zh": "两次扫描快照之间的磁盘占用状态完全一致。"
+  },
+  "storage_diff_empty_title": {
+    "en": "No Differences Found",
+    "zh": "未发现存储差异"
+  },
+  "storage_diff_files_count": {
+    "en": "%1$s files",
+    "zh": "%1$s 个文件"
+  },
+  "storage_diff_increased": {
+    "en": "Increased",
+    "zh": "增长"
+  },
+  "storage_diff_net_change": {
+    "en": "Net Storage Change",
+    "zh": "存储净变化量"
+  },
+  "storage_diff_subtitle": {
+    "en": "Comparing snapshots",
+    "zh": "对比快照差异"
+  },
+  "storage_diff_title": {
+    "en": "Storage Snapshot Comparison",
+    "zh": "存储快照差异对比"
+  },
+  "storage_diff_unchanged": {
+    "en": "Unchanged",
+    "zh": "无变化"
+  },
+  "storage_dir_summary": {
+    "en": "%1$s files · %2$s subfolders",
+    "zh": "%1$s 个文件 · %2$s 个子文件夹"
+  },
+  "storage_discovering_tree": {
+    "en": "Discovering storage tree…",
+    "zh": "正在深度遍历文件目录…"
+  },
+  "storage_dupes_analyzing": {
+    "en": "Analyzing file hash signatures…",
+    "zh": "正在比对文件特征哈希…"
+  },
+  "storage_dupes_clean_all": {
+    "en": "Clean All Duplicates",
+    "zh": "一键清理所有冗余副本"
+  },
+  "storage_dupes_clean_selected": {
+    "en": "Delete Selected Copies",
+    "zh": "清理所选副本"
+  },
+  "storage_dupes_copy": {
+    "en": "Duplicate",
+    "zh": "冗余副本"
+  },
+  "storage_dupes_delete_copy_desc": {
+    "en": "Delete duplicate copy",
+    "zh": "删除冗余副本"
+  },
+  "storage_dupes_desc": {
+    "en": "Identical content matching 3-chunk hash verification",
+    "zh": "基于三块抽样与完整哈希比对内容完全相同的文件"
+  },
+  "storage_dupes_each_copies": {
+    "en": "%1$s each · %2$s copies",
+    "zh": "单份 %1$s · %2$s 份副本"
+  },
+  "storage_dupes_empty_body": {
+    "en": "Tap refresh to scan for identical duplicate files in this folder.",
+    "zh": "点击刷新以检测此文件夹下的重复文件。"
+  },
+  "storage_dupes_none_found": {
+    "en": "No duplicate files detected in this scope.",
+    "zh": "当前范围内未发现内容完全重复的文件。"
+  },
+  "storage_dupes_original_kept_desc": {
+    "en": "Original kept",
+    "zh": "已保留原件"
+  },
+  "storage_dupes_refresh_desc": {
+    "en": "Refresh duplicates",
+    "zh": "刷新重复文件"
+  },
+  "storage_dupes_suggested_keep": {
+    "en": "Original (Keep)",
+    "zh": "建议保留原件"
+  },
+  "storage_dupes_summary": {
+    "en": "%1$s groups · %2$s reclaimable",
+    "zh": "%1$s 组 · 可释放 %2$s"
+  },
+  "storage_dupes_waste": {
+    "en": "Waste: %1$s",
+    "zh": "浪费空间：%1$s"
+  },
+  "storage_duration": {
+    "en": "Duration: %1$s s",
+    "zh": "耗时: %1$s 秒"
+  },
+  "storage_export_json_success": {
+    "en": "JSON report exported: %1$s",
+    "zh": "JSON 报告已导出：%1$s"
+  },
+  "storage_folder_empty_body": {
+    "en": "No subdirectories or files found in this node.",
+    "zh": "在此节点下未找到子目录或文件。"
+  },
+  "storage_folder_empty_title": {
+    "en": "Folder is Empty",
+    "zh": "文件夹为空"
+  },
+  "storage_history_scan_meta": {
+    "en": "%1$s · %2$s (%3$sms)",
+    "zh": "%1$s · %2$s (%3$sms)"
+  },
+  "storage_history_scan_summary": {
+    "en": "%1$s · %2$s files",
+    "zh": "%1$s · %2$s 个文件"
+  },
+  "storage_internal_storage": {
+    "en": "Internal Storage",
+    "zh": "内部存储空间"
+  },
+  "storage_items_count": {
+    "en": "%1$s items",
+    "zh": "%1$s 项"
+  },
+  "storage_largest_files_count": {
+    "en": "%1$s largest files (%2$s)",
+    "zh": "%1$s 个最大文件 (%2$s)"
+  },
+  "storage_metric_files": {
+    "en": "%1$s files",
+    "zh": "%1$s 个文件"
+  },
+  "storage_metric_folders": {
+    "en": "%1$s folders",
+    "zh": "%1$s 个文件夹"
+  },
+  "storage_metric_free": {
+    "en": "Free: %1$s",
+    "zh": "可用: %1$s"
+  },
+  "storage_metric_scanned": {
+    "en": "Scanned: %1$s",
+    "zh": "已扫描: %1$s"
+  },
+  "storage_metric_total": {
+    "en": "Total: %1$s",
+    "zh": "总容量: %1$s"
+  },
+  "storage_metric_used": {
+    "en": "Used: %1$s",
+    "zh": "已用: %1$s"
+  },
+  "storage_metric_waste": {
+    "en": "Wasted: %1$s",
+    "zh": "可释放空间: %1$s"
+  },
+  "storage_no_big_files_body": {
+    "en": "No files larger than 1MB were detected under this directory.",
+    "zh": "此目录下未发现大于 1MB 的大文件。"
+  },
+  "storage_no_big_files_title": {
+    "en": "No Big Files",
+    "zh": "暂无大文件"
+  },
+  "storage_no_recent_scans": {
+    "en": "No saved scans yet. Run a scan to capture storage state.",
+    "zh": "暂无历史扫描快照。立即扫描以掌握磁盘空间。"
+  },
+  "storage_overview_scan_hint": {
+    "en": "Scan to unlock detailed category breakdown",
+    "zh": "扫描后即可解锁全盘分类详细分布"
+  },
+  "storage_recent_scans": {
+    "en": "Saved Scan Snapshots",
+    "zh": "已保存的扫描快照"
+  },
+  "storage_root_label": {
+    "en": "Root",
+    "zh": "根目录"
+  },
+  "storage_scan_paused": {
+    "en": "Scan Paused",
+    "zh": "扫描已暂停"
+  },
+  "storage_scanned_percentage": {
+    "en": "%1$s%% of scanned",
+    "zh": "占扫描体积 %1$s%%"
+  },
+  "storage_scanning_in_progress": {
+    "en": "Scanning Storage…",
+    "zh": "正在扫描存储空间…"
+  },
+  "storage_scope_cat_desc": {
+    "en": "Select file categories to focus your scan:",
+    "zh": "选择要重点扫描的文件分类："
+  },
+  "storage_scope_category": {
+    "en": "By Category",
+    "zh": "分类扫描"
+  },
+  "storage_scope_folder": {
+    "en": "Select Folder",
+    "zh": "指定目录"
+  },
+  "storage_scope_folder_picked": {
+    "en": "Selected: %1$s",
+    "zh": "已选目录：%1$s"
+  },
+  "storage_scope_full": {
+    "en": "Full Device",
+    "zh": "整机扫描"
+  },
+  "storage_scope_full_desc": {
+    "en": "Scans internal storage (/storage/emulated/0) using clean-room squarified engine.",
+    "zh": "使用独立自研树图引擎扫描内置存储空间 (/storage/emulated/0)。"
+  },
+  "storage_scope_pick_folder_btn": {
+    "en": "Choose Folder…",
+    "zh": "选择扫描文件夹…"
+  },
+  "storage_scope_title": {
+    "en": "Scan Scope",
+    "zh": "扫描范围"
+  },
+  "storage_select_all": {
+    "en": "Select All",
+    "zh": "全选"
+  },
+  "storage_selected_count": {
+    "en": "%1$s selected",
+    "zh": "已选中 %1$s 项"
+  },
+  "storage_sort_files": {
+    "en": "Files ↓",
+    "zh": "按文件数 ↓"
+  },
+  "storage_sort_name": {
+    "en": "Name A-Z",
+    "zh": "按名称 A-Z"
+  },
+  "storage_sort_size": {
+    "en": "Size ↓",
+    "zh": "按大小 ↓"
+  },
+  "storage_tier_l1_desc": {
+    "en": "Standard MediaStore access for photos, videos, and audio.",
+    "zh": "仅访问系统媒体库中的照片、视频及音频。"
+  },
+  "storage_tier_l1_title": {
+    "en": "Media Access (L1)",
+    "zh": "基础媒体权限 (L1)"
+  },
+  "storage_tier_l2_desc": {
+    "en": "Scanning limited to folders granted via SAF.",
+    "zh": "仅限于已通过系统文件选择器授权的指定目录。"
+  },
+  "storage_tier_l2_title": {
+    "en": "Folder Access (L2)",
+    "zh": "授权目录访问 (L2)"
+  },
+  "storage_tier_l3_desc": {
+    "en": "Native scanning enabled at full speed across internal storage.",
+    "zh": "已开启原生极速扫描，可遍历全部机身文件。"
+  },
+  "storage_tier_l3_title": {
+    "en": "Full Device Access (L3)",
+    "zh": "完整磁盘权限 (L3)"
+  },
+  "storage_tier_status_granted": {
+    "en": "Active",
+    "zh": "已就绪"
+  },
+  "storage_tier_upgrade_btn": {
+    "en": "Grant Full Access",
+    "zh": "开启完整磁盘权限"
+  },
+  "storage_treemap_double_tap": {
+    "en": "Double-tap to open folder",
+    "zh": "双击进入该目录"
+  },
+  "storage_treemap_hint": {
+    "en": "Fit to Screen · Tap to inspect · Double-tap to open",
+    "zh": "全景自适应 · 点击卡片 · 双击下钻"
+  },
+  "storage_treemap_item_format": {
+    "en": "%1$s · %2$s",
+    "zh": "%1$s · %2$s"
+  },
+  "storage_usage_stats_permission_desc": {
+    "en": "Grant Usage Access to analyze exact app space usage",
+    "zh": "授权使用情况访问权限，精准分析各个应用空间占用"
+  },
+  "storage_usage_stats_permission_title": {
+    "en": "App Storage Details",
+    "zh": "应用存储详情"
+  },
+  "storage_vault_backup_desc": {
+    "en": "Files can be restored anytime from Vault tab",
+    "zh": "可在「保险箱」中随时恢复或彻底粉碎"
+  },
+  "storage_vault_backup_title": {
+    "en": "Backup to Vault (30 days recovery)",
+    "zh": "备份至保险箱（30天宽限期）"
+  },
+  "storage_view_categories": {
+    "en": "Categories",
+    "zh": "分类统计"
+  },
+  "storage_view_directory": {
+    "en": "Directory",
+    "zh": "目录列表"
+  },
+  "storage_view_duplicates": {
+    "en": "Duplicates",
+    "zh": "重复文件"
+  },
+  "storage_view_top_files": {
+    "en": "Big Files",
+    "zh": "大文件"
+  },
+  "storage_view_treemap": {
+    "en": "Treemap",
+    "zh": "区块树图"
+  },
+  "tab_storage": {
+    "en": "Storage",
+    "zh": "存储全景"
+  },
+  "target_size_per_video_hint": {
+    "en": "Applies to each video individually. Videos already smaller than this limit will be kept as-is.",
+    "zh": "适用于单视频体积上限。本身已小于该大小的视频将自动保持原样跳过。"
+  }
+}
