@@ -42,10 +42,6 @@ import com.spaceslimmer.app.ui.components.SsPrimaryButton
 import com.spaceslimmer.app.ui.components.SsScreen
 import com.spaceslimmer.app.ui.components.SsSegmentOption
 import com.spaceslimmer.app.ui.components.SsSegmented
-import com.spaceslimmer.app.billing.BillingManager
-import com.spaceslimmer.app.billing.SpaceSlimmerApiClient
-import com.spaceslimmer.app.ui.auth.PaywallGateDialog
-import com.spaceslimmer.app.ui.auth.PaywallReason
 import com.spaceslimmer.app.ui.theme.InputShape
 import com.spaceslimmer.core.CoreFeatures
 import com.spaceslimmer.videohw.HwCapsProbe
@@ -85,8 +81,6 @@ fun RadarPresetScreen(
     var decisions by remember { mutableStateOf<List<Decision>>(emptyList()) }
     var loading by remember { mutableStateOf(false) }
     var error by remember { mutableStateOf<String?>(null) }
-    var showPaywallGate by remember { mutableStateOf(false) }
-    var paywallReason by remember { mutableStateOf<PaywallReason?>(null) }
     val opusAvailable = CoreFeatures.opusEncodeAvailable(engine)
     LaunchedEffect(opusAvailable) {
         if (!opusAvailable && audioFormat == "opus") {
@@ -170,21 +164,6 @@ fun RadarPresetScreen(
     }
 
     fun submitJobs(core: CoreEngine) {
-        val isPro = BillingManager.isProUnlocked(context)
-        if (!isPro) {
-            val maxBatch = if (hasVideos) 3 else if (hasImages) 10 else 5
-            if (items.size > maxBatch) {
-                paywallReason = PaywallReason.BatchLimit(items.size, maxBatch)
-                showPaywallGate = true
-                return
-            }
-            val remaining = SpaceSlimmerApiClient.getRemainingQuota(context)
-            if (remaining <= 0) {
-                paywallReason = PaywallReason.QuotaExhausted
-                showPaywallGate = true
-                return
-            }
-        }
         loading = true
         error = null
         onRequestNotificationPermission()
@@ -197,9 +176,6 @@ fun RadarPresetScreen(
                     audioRequest = if (hasAudio) audioRequest(core) else null,
                 )
                 val groupId = MediaRadar.queueCompress(context, core, items, options)
-                scope.launch {
-                    SpaceSlimmerApiClient.consumeQuota(context, count = items.size, mediaType = "radar")
-                }
                 onSubmitted(groupId)
             }.onFailure { error = it.message }
             loading = false
@@ -363,15 +339,4 @@ fun RadarPresetScreen(
         }
     }
 
-    if (showPaywallGate && paywallReason != null) {
-        PaywallGateDialog(
-            reason = paywallReason!!,
-            onDismissRequest = { showPaywallGate = false },
-            onUnlockSuccess = {
-                showPaywallGate = false
-                val core = engine ?: return@PaywallGateDialog
-                submitJobs(core)
-            },
-        )
-    }
 }

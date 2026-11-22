@@ -393,8 +393,6 @@
     <string name="profile_refresh_status">Status aktualisieren</string>
     <string name="auth_login_title">Anmelden</string>
     <string name="auth_register_title">Konto erstellen</string>
-    <string name="auth_email_label">E-Mail-Adresse</string>
-    <string name="auth_email_hint">E-Mail eingeben</string>
     <string name="auth_password_label">Passwort (mind. 6 Zeichen)</string>
     <string name="auth_password_hint">Passwort eingeben</string>
     <string name="auth_submit_login">Anmelden</string>
@@ -488,7 +486,6 @@ Diese Dateien können NIEMALS wiederhergestellt werden! Wirklich leeren?</string
     <string name="action_back_home">Zurück zum Start</string>
     <string name="action_play">Abspielen</string>
     <string name="import_failed">Import fehlgeschlagen</string>
-    <string name="auth_err_invalid_credentials">Gültige E-Mail und Passwort mit mindestens 6 Zeichen eingeben</string>
     <string name="auth_err_request_failed">Anfrage fehlgeschlagen, bitte erneut versuchen</string>
     <string name="paywall_have_license_btn">Schlüssel vorhanden? Hier einlösen</string>
     <string name="redeeming">Wird eingelöst…</string>

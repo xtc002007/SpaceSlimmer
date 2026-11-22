@@ -393,8 +393,6 @@
     <string name="profile_refresh_status">Actualizar estado</string>
     <string name="auth_login_title">Iniciar sesión</string>
     <string name="auth_register_title">Crear cuenta</string>
-    <string name="auth_email_label">Correo electrónico</string>
-    <string name="auth_email_hint">Ingresa tu correo</string>
     <string name="auth_password_label">Contraseña (mín. 6 caracteres)</string>
     <string name="auth_password_hint">Ingresa tu contraseña</string>
     <string name="auth_submit_login">Entrar</string>
@@ -488,7 +486,6 @@
     <string name="action_back_home">Volver al inicio</string>
     <string name="action_play">Reproducir</string>
     <string name="import_failed">Error al importar</string>
-    <string name="auth_err_invalid_credentials">Ingresa un correo válido y una contraseña de al menos 6 caracteres</string>
     <string name="auth_err_request_failed">Error en la solicitud. Inténtalo más tarde</string>
     <string name="paywall_have_license_btn">¿Tienes una clave? Canjéala aquí</string>
     <string name="redeeming">Canjeando…</string>

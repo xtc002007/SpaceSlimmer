@@ -393,8 +393,6 @@
     <string name="profile_refresh_status">Atualizar status</string>
     <string name="auth_login_title">Entrar</string>
     <string name="auth_register_title">Criar conta</string>
-    <string name="auth_email_label">E-mail</string>
-    <string name="auth_email_hint">Digite seu e-mail</string>
     <string name="auth_password_label">Senha (mín. 6 caracteres)</string>
     <string name="auth_password_hint">Digite sua senha</string>
     <string name="auth_submit_login">Entrar</string>
@@ -488,7 +486,6 @@ Você NUNCA mais poderá recuperar esses arquivos! Confirmar esvaziamento?</stri
     <string name="action_back_home">Voltar ao início</string>
     <string name="action_play">Reproduzir</string>
     <string name="import_failed">Falha na importação</string>
-    <string name="auth_err_invalid_credentials">Digite um e-mail válido e uma senha com pelo menos 6 caracteres</string>
     <string name="auth_err_request_failed">Falha na requisição. Tente novamente mais tarde</string>
     <string name="paywall_have_license_btn">Já tem uma chave? Resgate aqui</string>
     <string name="redeeming">Resgatando…</string>

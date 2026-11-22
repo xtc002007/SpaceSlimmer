@@ -36,8 +36,8 @@ android {
         applicationId = "com.spaceslimmer.app"
         minSdk = 26
         targetSdk = 36
-        versionCode = 8
-        versionName = "0.2.4"
+        versionCode = 9
+        versionName = "0.2.5"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         buildConfigField("boolean", "FEATURE_IAP", "false")
         vectorDrawables {

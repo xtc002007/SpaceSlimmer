@@ -393,8 +393,6 @@
     <string name="profile_refresh_status">状態を更新</string>
     <string name="auth_login_title">ログイン</string>
     <string name="auth_register_title">アカウント登録</string>
-    <string name="auth_email_label">メールアドレス</string>
-    <string name="auth_email_hint">メールアドレスを入力</string>
     <string name="auth_password_label">パスワード（6文字以上）</string>
     <string name="auth_password_hint">パスワードを入力</string>
     <string name="auth_submit_login">ログイン</string>
@@ -488,7 +486,6 @@
     <string name="action_back_home">ホームへ戻る</string>
     <string name="action_play">再生</string>
     <string name="import_failed">インポートに失敗しました</string>
-    <string name="auth_err_invalid_credentials">有効なメールアドレスと6文字以上のパスワードを入力してください</string>
     <string name="auth_err_request_failed">通信に失敗しました。後ほど再試行してください</string>
     <string name="paywall_have_license_btn">コードをお持ちの方はこちらから引き換え</string>
     <string name="redeeming">引き換え中…</string>

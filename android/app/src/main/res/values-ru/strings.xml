@@ -393,8 +393,6 @@
     <string name="profile_refresh_status">Refresh</string>
     <string name="auth_login_title">Вход в SpaceSlimmer</string>
     <string name="auth_register_title">Create Account</string>
-    <string name="auth_email_label">Email Address</string>
-    <string name="auth_email_hint">Enter your email</string>
     <string name="auth_password_label">Password (min 6 chars)</string>
     <string name="auth_password_hint">Enter password</string>
     <string name="auth_submit_login">Log In</string>
@@ -488,7 +486,6 @@
     <string name="action_back_home">Back to Home</string>
     <string name="action_play">Play</string>
     <string name="import_failed">Import failed</string>
-    <string name="auth_err_invalid_credentials">Please enter a valid email and password (min 6 chars)</string>
     <string name="auth_err_request_failed">Request failed, please try again</string>
     <string name="paywall_have_license_btn">Have a key? Redeem here</string>
     <string name="redeeming">Redeeming…</string>

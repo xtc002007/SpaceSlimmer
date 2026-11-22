@@ -80,10 +80,6 @@ import uniffi.ss_core.Decision
 import uniffi.ss_core.MediaKind
 import uniffi.ss_core.OutputPolicy
 import uniffi.ss_core.QualityPreset
-import com.spaceslimmer.app.billing.BillingManager
-import com.spaceslimmer.app.billing.SpaceSlimmerApiClient
-import com.spaceslimmer.app.ui.auth.PaywallGateDialog
-import com.spaceslimmer.app.ui.auth.PaywallReason
 import uniffi.ss_core.TimeClass
 import uniffi.ss_core.VideoCustomParams
 
@@ -115,8 +111,6 @@ fun HomeCompressSection(
     var importError by remember { mutableStateOf<String?>(null) }
     var showReplaceConfirm by remember { mutableStateOf(false) }
     var showAdvanced by remember { mutableStateOf(false) }
-    var showPaywallGate by remember { mutableStateOf(false) }
-    var paywallReason by remember { mutableStateOf<PaywallReason?>(null) }
     val scope = rememberCoroutineScope()
     val context = LocalContext.current
     val hwCaps = remember { HwCapsProbe.probe() }
@@ -259,39 +253,6 @@ fun HomeCompressSection(
     }
 
     fun startCompress() {
-        val isPro = BillingManager.isProUnlocked(context)
-        if (!isPro) {
-            val maxBatch = when (selectedKind) {
-                MediaKind.VIDEO -> 3
-                MediaKind.IMAGE -> 10
-                MediaKind.AUDIO -> 5
-            }
-            if (selectedCount > maxBatch) {
-                paywallReason = PaywallReason.BatchLimit(selectedCount, maxBatch)
-                showPaywallGate = true
-                return
-            }
-
-            if (selectedPreset == QualityPreset.VIDEO_TARGET_SIZE || selectedPreset == QualityPreset.VIDEO_CUSTOM) {
-                paywallReason = PaywallReason.ProFeature(context.getString(R.string.target_size_mb))
-                showPaywallGate = true
-                return
-            }
-
-            if (selectedFormat == "avif" || (selectedKind == MediaKind.VIDEO && compatibility == Compatibility.EFFICIENT)) {
-                paywallReason = PaywallReason.ProFeature(context.getString(R.string.home_compress_pro_hevc_feature))
-                showPaywallGate = true
-                return
-            }
-
-            val remaining = SpaceSlimmerApiClient.getRemainingQuota(context)
-            if (remaining <= 0) {
-                paywallReason = PaywallReason.QuotaExhausted
-                showPaywallGate = true
-                return
-            }
-        }
-
         loading = true
         error = null
         onRequestNotificationPermission()
@@ -321,14 +282,6 @@ fun HomeCompressSection(
             }
             result.onSuccess {
                 com.spaceslimmer.core.AppLogger.i("HomeCompress", "submit succeeded: groupId=$it")
-                scope.launch {
-                    val countToConsume = decisions.count { !it.skip }.coerceAtLeast(1)
-                    SpaceSlimmerApiClient.consumeQuota(
-                        context = context,
-                        count = countToConsume,
-                        mediaType = selectedKind.name.lowercase(),
-                    )
-                }
                 when (selectedKind) {
                     MediaKind.IMAGE -> photoViewModel.clearSelection()
                     else -> mediaViewModel.clearSelection()
@@ -845,16 +798,6 @@ fun HomeCompressSection(
         )
     }
 
-    if (showPaywallGate && paywallReason != null) {
-        PaywallGateDialog(
-            reason = paywallReason!!,
-            onDismissRequest = { showPaywallGate = false },
-            onUnlockSuccess = {
-                showPaywallGate = false
-                startCompress()
-            },
-        )
-    }
 }
 
 private fun defaultPreset(kind: MediaKind): QualityPreset = when (kind) {

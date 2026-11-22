@@ -393,8 +393,6 @@
     <string name="profile_refresh_status">刷新狀態</string>
     <string name="auth_login_title">登入賬號</string>
     <string name="auth_register_title">注册新賬號</string>
-    <string name="auth_email_label">郵箱地址</string>
-    <string name="auth_email_hint">请輸入您的郵箱</string>
     <string name="auth_password_label">密码 (至少6位)</string>
     <string name="auth_password_hint">请輸入密码</string>
     <string name="auth_submit_login">立即登入</string>
@@ -488,7 +486,6 @@
     <string name="action_back_home">返回首頁</string>
     <string name="action_play">播放</string>
     <string name="import_failed">導入失败</string>
-    <string name="auth_err_invalid_credentials">请輸入有效郵箱及至少6位密码</string>
     <string name="auth_err_request_failed">请求失败，请稍後重試</string>
     <string name="paywall_have_license_btn">已有啟用碼？點擊直接兑換</string>
     <string name="redeeming">正在兑換…</string>
